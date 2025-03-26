@@ -1,0 +1,81 @@
+.player-hand {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  min-height: 160px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.player-hand:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.card-wrapper {
+  position: relative;
+  transition: transform 0.3s ease;
+  margin-right: -1rem;
+}
+
+.card-wrapper:last-child {
+  margin-right: 0;
+}
+
+.card-wrapper:hover {
+  transform: translateY(-10px);
+  z-index: 10;
+}
+
+/* Card selection animation */
+.card-wrapper.selected {
+  transform: translateY(-10px);
+  z-index: 20;
+}
+
+/* Disabled state */
+.player-hand.disabled {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .player-hand {
+    padding: 0.5rem;
+    min-height: 120px;
+  }
+
+  .card-wrapper {
+    margin-right: -0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .player-hand {
+    padding: 0.25rem;
+    min-height: 100px;
+  }
+
+  .card-wrapper {
+    margin-right: -0.25rem;
+  }
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+  .player-hand {
+    border: 2px solid CanvasText;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .player-hand,
+  .card-wrapper {
+    transition: none;
+  }
+} 

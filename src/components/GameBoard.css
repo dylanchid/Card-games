@@ -9,6 +9,7 @@
   justify-content: space-between;
   padding: 1rem;
   box-sizing: border-box;
+  user-select: none;
 }
 
 .game-board .flex {
@@ -34,7 +35,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
 }
 
 .card-stack.deck {
@@ -46,13 +48,30 @@
 }
 
 .card-stack.valid-drop {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(34, 197, 94, 0.1);
   transform: scale(1.02);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
 }
 
 .card-stack.invalid-drop {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.1);
   transform: scale(0.98);
-  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.5);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+.card-stack.dragging-over {
+  outline: 2px dashed rgba(255, 255, 255, 0.5);
+  outline-offset: -2px;
+}
+
+/* Card being dragged */
+.playing-card.dragging {
+  opacity: 0.6;
+  transform: scale(1.05);
+  cursor: grabbing !important;
+  pointer-events: none;
 }
 
 /* Card positioning within stack */
@@ -79,21 +98,10 @@
 }
 
 /* Stack hover effects */
-.card-stack:hover .card:not(:last-child) {
-  transform: translateY(-4px);
-}
-
-/* Drag and drop visual feedback */
-.card-stack.drag-over {
-  border: 2px dashed rgba(255, 255, 255, 0.5);
-}
-
-.card-stack.can-drop {
-  background: rgba(0, 255, 0, 0.1);
-}
-
-.card-stack.no-drop {
-  background: rgba(255, 0, 0, 0.1);
+.card-stack:not(.disabled):hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+  transition: all 0.2s ease;
 }
 
 /* Stack positioning */

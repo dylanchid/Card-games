@@ -13,9 +13,9 @@ import './GameBoard.css';
 
 interface GameBoardProps {
   stacks: StackType[];
-  onCardMove: (card: CardType, fromStackId: string, toStackId: string) => void;
+  onCardMove: (card: CardType, sourceStackId: string, targetStackId: string) => void;
   disabled?: boolean;
-  isLoading: boolean;
+  isLoading?: boolean;
 }
 
 const GameBoardError: React.FC<{ error: Error }> = ({ error }) => (
@@ -49,12 +49,12 @@ export function GameBoard({ stacks, onCardMove, disabled = false, isLoading }: G
     isValidDrop: false
   });
 
-  const handleCardClick = useCallback(() => {
-    if (disabled) return;
-  }, [disabled]);
+  const handleCardClick = useCallback((card: CardType, stackId: string) => {
+    // Handle card click based on game state
+    console.log('[GameBoard] Card clicked:', { card, stackId });
+  }, []);
 
   const handleDragStart = useCallback((card: CardType, stackId: string) => {
-    console.log('[GameBoard] Drag started:', { card, stackId });
     setDragState({
       card,
       sourceStackId: stackId,
@@ -64,46 +64,32 @@ export function GameBoard({ stacks, onCardMove, disabled = false, isLoading }: G
   }, []);
 
   const handleDragOver = useCallback((stackId: string) => {
-    if (!dragState.card || !dragState.sourceStackId) return;
+    if (!dragState.card || dragState.sourceStackId === stackId) return;
 
     const sourceStack = stacks.find(s => s.id === dragState.sourceStackId);
     const targetStack = stacks.find(s => s.id === stackId);
 
     if (!sourceStack || !targetStack) return;
 
-    // Find applicable move rule
-    const moveRule = DEFAULT_CARD_MOVE_RULES.find(
-      rule => rule.fromStack === sourceStack.type && rule.toStack === targetStack.type
-    );
-
-    const isValidMove = moveRule ? moveRule.isValid(dragState.card, sourceStack, targetStack) : false;
-
-    console.log('[GameBoard] Drag over:', {
-      card: dragState.card,
-      sourceStack: sourceStack.type,
-      targetStack: targetStack.type,
-      isValidMove
-    });
+    // Validate if the move is allowed based on game rules
+    const isValidMove = validateCardMove(dragState.card, sourceStack, targetStack);
 
     setDragState(prev => ({
       ...prev,
       targetStackId: stackId,
       isValidDrop: isValidMove
     }));
-  }, [dragState.card, dragState.sourceStackId, stacks]);
+  }, [dragState, stacks]);
 
   const handleDragEnd = useCallback(() => {
     const { card, sourceStackId, targetStackId, isValidDrop } = dragState;
 
-    console.log('[GameBoard] Drag ended:', {
-      card,
-      sourceStackId,
-      targetStackId,
-      isValidDrop
-    });
-
     if (card && sourceStackId && targetStackId && isValidDrop) {
-      onCardMove(card, sourceStackId, targetStackId);
+      try {
+        onCardMove(card, sourceStackId, targetStackId);
+      } catch (error) {
+        console.error('[GameBoard] Error during card move:', error);
+      }
     }
 
     setDragState({
@@ -113,6 +99,16 @@ export function GameBoard({ stacks, onCardMove, disabled = false, isLoading }: G
       isValidDrop: false
     });
   }, [dragState, onCardMove]);
+
+  const validateCardMove = (card: CardType, sourceStack: StackType, targetStack: StackType): boolean => {
+    // Implement game-specific validation rules here
+    // For example:
+    // - Can't move cards from the deck
+    // - Can only play cards of the same suit as the lead card
+    // - Can only play face-up cards
+    // - Can't move cards to the discard pile during certain game phases
+    return true;
+  };
 
   if (isLoading) {
     return <GameBoardLoading />;
@@ -129,8 +125,8 @@ export function GameBoard({ stacks, onCardMove, disabled = false, isLoading }: G
           <Stack
             key={stack.id}
             stack={stack}
-            onCardClick={handleCardClick}
-            onDragStart={handleDragStart}
+            onCardClick={(card: CardType) => handleCardClick(card, stack.id)}
+            onDragStart={(card: CardType) => handleDragStart(card, stack.id)}
             onDragOver={() => handleDragOver(stack.id)}
             onDragEnd={handleDragEnd}
             isDragTarget={stack.id === dragState.targetStackId}

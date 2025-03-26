@@ -261,10 +261,25 @@ export const DEFAULT_CARD_MOVE_RULES: CardMoveRule[] = [
     }
   },
   {
+    fromStack: 'deck',
+    toStack: 'table',
+    isValid: (card: CardType, fromStack: StackType, toStack: StackType) => {
+      return !toStack.isFull;
+    }
+  },
+  {
     fromStack: 'table',
     toStack: 'discard',
     isValid: (card: CardType, fromStack: StackType, toStack: StackType) => {
       return card.isFaceUp;
+    }
+  },
+  {
+    fromStack: 'deck',
+    toStack: 'deck',
+    isValid: (card: CardType, fromStack: StackType, toStack: StackType) => {
+      // Only allow moving back to the same deck or if target deck is empty
+      return fromStack.id === toStack.id || toStack.cards.length === 0;
     }
   }
 ];

@@ -12,6 +12,7 @@ interface CardProps {
   selected?: boolean;
   index?: number;
   style?: React.CSSProperties;
+  id?: string;
 }
 
 export const Card: React.FC<CardProps> = memo(
@@ -21,33 +22,22 @@ export const Card: React.FC<CardProps> = memo(
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-      console.log(`[Card] Mounting/Updating card:`, {
-        rank: card.rank,
-        suit: card.suit,
-        isFaceUp: card.isFaceUp,
-        position: card.position,
-        index
-      });
-
       let isMounted = true;
 
       const loadCard = async () => {
         try {
           setIsLoading(true);
-          // Validate card data
           if (!isValidCardAsset(card.rank as Rank, card.suit as Suit)) {
             throw new Error('Invalid card data');
           }
 
-          console.log(`[Card] Starting to load card asset for ${card.rank} of ${card.suit}`);
           const content = await loadCardAsset(card.rank as Rank, card.suit as Suit);
-          console.log(`[Card] Successfully loaded SVG content for ${card.rank} of ${card.suit}`);
           if (isMounted) {
             setSvgContent(content);
             setError(null);
           }
         } catch (err) {
-          console.error(`[Card] Failed to load card asset for ${card.rank} of ${card.suit}:`, err);
+          console.error(`[Card] Failed to load card asset:`, err);
           if (isMounted) {
             setError(err instanceof Error ? err : new Error('Failed to load card'));
           }
@@ -63,7 +53,6 @@ export const Card: React.FC<CardProps> = memo(
       }
 
       return () => {
-        console.log(`[Card] Unmounting card: ${card.rank} of ${card.suit}`);
         isMounted = false;
       };
     }, [card.rank, card.suit, card.isFaceUp, card.position, index]);
@@ -99,18 +88,16 @@ export const Card: React.FC<CardProps> = memo(
     );
 
     const getCardClasses = () => {
-      const classes = [
+      return [
         'playing-card',
         getCardColor(card),
         selected && 'selected',
         disabled && 'disabled',
         !card.isFaceUp && 'face-down',
         isFaceCard(card) && 'face-card',
-        error && 'error'
+        error && 'error',
+        card.isAnimating && `animating-${card.animationType}`
       ].filter(Boolean).join(' ');
-      
-      console.log(`[Card] Generated classes for ${card.rank} of ${card.suit}:`, classes);
-      return classes;
     };
 
     const cardStyle = {
@@ -118,7 +105,8 @@ export const Card: React.FC<CardProps> = memo(
         card.position.x ? `translateX(${card.position.x}px)` : '',
         card.position.y ? `translateY(${card.position.y}px)` : '',
         selected ? 'translateY(-10px)' : '',
-        !card.position.x && !card.position.y && !selected ? 'scale(1)' : ''
+        !card.position.x && !card.position.y && !selected ? 'scale(1)' : '',
+        card.isAnimating && card.animationProgress ? `scale(${1 + card.animationProgress * 0.1})` : ''
       ].filter(Boolean).join(' '),
       zIndex: card.position.zIndex + index,
       ...style

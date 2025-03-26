@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
-import type { GameState, GameMode } from '../gameSlice';
+import type { GameState, GameMode, Player, GamePhase } from '../gameSlice';
 import gameReducer, { 
   dealCards,
   playCard,
@@ -12,6 +12,51 @@ import { initializeGame } from '../gameThunks';
 import { createDeck } from '@/utils/gameUtils';
 import type { CardType } from '@/types/card';
 import { Suit, Rank } from '@/types/card';
+
+// Test helper functions
+const createTestPlayer = (id: string, handIds: string[] = []): Player => ({
+  id,
+  name: `Player ${id}`,
+  handIds,
+  bidCardIds: [],
+  revealBid: false,
+  tricksWon: 0,
+  score: 0,
+  isActive: true,
+});
+
+const createTestCard = (id: string, suit: Suit = Suit.HEARTS, rank: Rank = Rank.ACE): CardType => ({
+  id,
+  suit,
+  rank,
+  isFaceUp: true,
+  position: { x: 0, y: 0, zIndex: 0 },
+});
+
+const setupTestState = (store: ReturnType<typeof configureStore<{ game: GameState }>>, {
+  gamePhase = 'playing',
+  players = [createTestPlayer('player-1')],
+  cards = [createTestCard('card-1')],
+  currentTrickCardIds = [null, null, null],
+  currentPlayerIndex = 0,
+}: {
+  gamePhase?: GamePhase;
+  players?: Player[];
+  cards?: CardType[];
+  currentTrickCardIds?: (string | null)[];
+  currentPlayerIndex?: number;
+} = {}) => {
+  store.dispatch({ type: 'game/setGamePhase', payload: gamePhase });
+  store.dispatch({ type: 'game/setPlayers', payload: players });
+  store.dispatch({ 
+    type: 'game/batchUpdateCards', 
+    payload: { 
+      updates: cards.reduce((acc, card) => ({ ...acc, [card.id]: card }), {})
+    }
+  });
+  store.dispatch({ type: 'game/setCurrentTrickCardIds', payload: currentTrickCardIds });
+  store.dispatch({ type: 'game/setCurrentPlayerIndex', payload: currentPlayerIndex });
+};
 
 describe('gameSlice', () => {
   let store: ReturnType<typeof configureStore<{ game: GameState }>>;
@@ -38,7 +83,6 @@ describe('gameSlice', () => {
     });
 
     it('should handle initialization error', async () => {
-      // Mock error by passing invalid number of players
       await store.dispatch(initializeGame(0) as any);
 
       const state = store.getState().game;
@@ -49,15 +93,13 @@ describe('gameSlice', () => {
 
   describe('dealCards', () => {
     it('should deal cards correctly', () => {
-      // Set up initial state
-      store.dispatch({ type: 'game/setGamePhase', payload: 'dealing' });
-      store.dispatch({ 
-        type: 'game/setPlayers', 
-        payload: [
-          { id: 'player-1', name: 'Player 1', handIds: [], bidCardIds: [], revealBid: false, tricksWon: 0, score: 0, isActive: true },
-          { id: 'player-2', name: 'Player 2', handIds: [], bidCardIds: [], revealBid: false, tricksWon: 0, score: 0, isActive: true },
-          { id: 'player-3', name: 'Player 3', handIds: [], bidCardIds: [], revealBid: false, tricksWon: 0, score: 0, isActive: true },
-        ]
+      setupTestState(store, {
+        gamePhase: 'dealing',
+        players: [
+          createTestPlayer('player-1'),
+          createTestPlayer('player-2'),
+          createTestPlayer('player-3'),
+        ],
       });
 
       store.dispatch(dealCards());
@@ -71,9 +113,7 @@ describe('gameSlice', () => {
     });
 
     it('should not allow dealing in wrong phase', () => {
-      // Set game phase to playing
-      store.dispatch({ type: 'game/setGamePhase', payload: 'playing' });
-      
+      setupTestState(store, { gamePhase: 'playing' });
       store.dispatch(dealCards());
 
       const state = store.getState().game;
@@ -84,28 +124,12 @@ describe('gameSlice', () => {
 
   describe('playCard', () => {
     it('should play card correctly', () => {
-      // Set up initial state
       const playerId = 'player-1';
-      const card: CardType = { 
-        id: 'card-1', 
-        suit: Suit.HEARTS, 
-        rank: Rank.ACE,
-        isFaceUp: true,
-        position: { x: 0, y: 0, zIndex: 0 }
-      };
-
-      store.dispatch({ type: 'game/setGamePhase', payload: 'playing' });
-      store.dispatch({ 
-        type: 'game/setPlayers', 
-        payload: [
-          { id: playerId, name: 'Player 1', handIds: [card.id], bidCardIds: [], revealBid: false, tricksWon: 0, score: 0, isActive: true }
-        ]
-      });
-      store.dispatch({ 
-        type: 'game/batchUpdateCards', 
-        payload: { 
-          updates: { [card.id]: card }
-        }
+      const card = createTestCard('card-1');
+      
+      setupTestState(store, {
+        players: [createTestPlayer(playerId, [card.id])],
+        cards: [card],
       });
 
       store.dispatch(playCard({ playerId, card }));
@@ -117,18 +141,13 @@ describe('gameSlice', () => {
 
     it('should not allow playing invalid card', () => {
       const playerId = 'player-1';
-      const card: CardType = { 
-        id: 'card-1', 
-        suit: Suit.HEARTS, 
-        rank: Rank.ACE,
-        isFaceUp: true,
-        position: { x: 0, y: 0, zIndex: 0 }
-      };
+      const card = createTestCard('card-1');
 
-      // Set up state to make card invalid
-      store.dispatch({ type: 'game/setGamePhase', payload: 'playing' });
-      store.dispatch({ type: 'game/setCurrentTrickCardIds', payload: [null, null, null] });
-      store.dispatch({ type: 'game/setCurrentPlayerIndex', payload: 1 });
+      setupTestState(store, {
+        players: [createTestPlayer(playerId)],
+        cards: [card],
+        currentPlayerIndex: 1,
+      });
 
       store.dispatch(playCard({ playerId, card }));
 
@@ -139,29 +158,13 @@ describe('gameSlice', () => {
 
     it('should track trick history when trick is complete', () => {
       const playerId = 'player-1';
-      const card: CardType = { 
-        id: 'card-1', 
-        suit: Suit.HEARTS, 
-        rank: Rank.ACE,
-        isFaceUp: true,
-        position: { x: 0, y: 0, zIndex: 0 }
-      };
+      const card = createTestCard('card-1');
 
-      // Set up state for a complete trick
-      store.dispatch({ type: 'game/setGamePhase', payload: 'playing' });
-      store.dispatch({ 
-        type: 'game/setPlayers', 
-        payload: [
-          { id: playerId, name: 'Player 1', handIds: [card.id], bidCardIds: [], revealBid: false, tricksWon: 0, score: 0, isActive: true }
-        ]
+      setupTestState(store, {
+        players: [createTestPlayer(playerId, [card.id])],
+        cards: [card],
+        currentTrickCardIds: [card.id, card.id, card.id],
       });
-      store.dispatch({ 
-        type: 'game/batchUpdateCards', 
-        payload: { 
-          updates: { [card.id]: card }
-        }
-      });
-      store.dispatch({ type: 'game/setCurrentTrickCardIds', payload: [card.id, card.id, card.id] });
 
       store.dispatch(playCard({ playerId, card }));
 
@@ -174,37 +177,16 @@ describe('gameSlice', () => {
 
   describe('placeBid', () => {
     it('should place bid correctly', () => {
-      // Set up initial state
       const playerId = 'player-1';
-      const bidCards: CardType[] = [
-        { 
-          id: 'card-1', 
-          suit: Suit.HEARTS, 
-          rank: Rank.ACE,
-          isFaceUp: true,
-          position: { x: 0, y: 0, zIndex: 0 }
-        },
-        { 
-          id: 'card-2', 
-          suit: Suit.SPADES, 
-          rank: Rank.KING,
-          isFaceUp: true,
-          position: { x: 0, y: 0, zIndex: 0 }
-        },
+      const bidCards = [
+        createTestCard('card-1'),
+        createTestCard('card-2', Suit.SPADES, Rank.KING),
       ];
 
-      store.dispatch({ type: 'game/setGamePhase', payload: 'bidding' });
-      store.dispatch({ 
-        type: 'game/setPlayers', 
-        payload: [
-          { id: playerId, name: 'Player 1', handIds: bidCards.map(c => c.id), bidCardIds: [], revealBid: false, tricksWon: 0, score: 0, isActive: true }
-        ]
-      });
-      store.dispatch({ 
-        type: 'game/batchUpdateCards', 
-        payload: { 
-          updates: bidCards.reduce((acc, card) => ({ ...acc, [card.id]: card }), {})
-        }
+      setupTestState(store, {
+        gamePhase: 'bidding',
+        players: [createTestPlayer(playerId, bidCards.map(c => c.id))],
+        cards: bidCards,
       });
 
       store.dispatch(placeBid({ playerId, bidCards }));
@@ -215,17 +197,14 @@ describe('gameSlice', () => {
     });
 
     it('should not allow placing bid in wrong phase', () => {
-      // Set game phase to playing
-      store.dispatch({ type: 'game/setGamePhase', payload: 'playing' });
-
       const playerId = 'player-1';
-      const bidCards: CardType[] = [{ 
-        id: 'card-1', 
-        suit: Suit.HEARTS, 
-        rank: Rank.ACE,
-        isFaceUp: true,
-        position: { x: 0, y: 0, zIndex: 0 }
-      }];
+      const bidCards = [createTestCard('card-1')];
+
+      setupTestState(store, {
+        gamePhase: 'playing',
+        players: [createTestPlayer(playerId)],
+        cards: bidCards,
+      });
 
       store.dispatch(placeBid({ playerId, bidCards }));
 
@@ -237,13 +216,9 @@ describe('gameSlice', () => {
 
   describe('revealBid', () => {
     it('should reveal bid correctly', () => {
-      // Set up initial state
       const playerId = 'player-1';
-      store.dispatch({ 
-        type: 'game/setPlayers', 
-        payload: [
-          { id: playerId, name: 'Player 1', handIds: [], bidCardIds: [], revealBid: false, tricksWon: 0, score: 0, isActive: true }
-        ]
+      setupTestState(store, {
+        players: [createTestPlayer(playerId)],
       });
 
       store.dispatch(revealBid({ playerId }));
@@ -255,8 +230,11 @@ describe('gameSlice', () => {
 
   describe('calculateScores', () => {
     it('should calculate scores correctly', () => {
-      // Set up test state
       const playerId = 'player-1';
+      setupTestState(store, {
+        players: [createTestPlayer(playerId)],
+      });
+
       store.dispatch({ 
         type: 'game/batchUpdatePlayers', 
         payload: { 

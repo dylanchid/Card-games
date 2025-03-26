@@ -11,7 +11,7 @@ interface StackProps {
   isDragTarget: boolean;
   isValidDrop: boolean;
   disabled?: boolean;
-  onCardClick?: () => void;
+  onCardClick?: (card: CardType) => void;
 }
 
 export function Stack({
@@ -34,12 +34,26 @@ export function Stack({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Add visual feedback class
+    e.currentTarget.classList.add('dragging-over');
     onDragOver();
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Remove visual feedback class
+    e.currentTarget.classList.remove('dragging-over');
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Remove visual feedback class
+    e.currentTarget.classList.remove('dragging-over');
     onDragEnd();
   };
 
@@ -47,16 +61,34 @@ export function Stack({
     <div 
       className={stackClasses}
       onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       data-testid="card-stack"
+      data-stack-type={stack.type}
     >
       {stack.cards.map((card, index) => (
         <Card
           key={card.id}
           card={card}
-          onDragStart={() => onDragStart(card, stack.id)}
-          onDragEnd={onDragEnd}
-          onClick={onCardClick}
+          onDragStart={() => {
+            if (!disabled) {
+              onDragStart(card, stack.id);
+              // Add dragging class to the card
+              const cardElement = document.getElementById(card.id);
+              if (cardElement) {
+                cardElement.classList.add('dragging');
+              }
+            }
+          }}
+          onDragEnd={() => {
+            onDragEnd();
+            // Remove dragging class from the card
+            const cardElement = document.getElementById(card.id);
+            if (cardElement) {
+              cardElement.classList.remove('dragging');
+            }
+          }}
+          onClick={() => onCardClick?.(card)}
           style={{
             transform: stack.type === 'hand' 
               ? `translateX(${index * 30}px)` 
@@ -64,6 +96,7 @@ export function Stack({
             zIndex: stack.cards.length - index
           }}
           disabled={disabled}
+          id={card.id}
         />
       ))}
     </div>
