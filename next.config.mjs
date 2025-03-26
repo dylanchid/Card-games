@@ -5,7 +5,7 @@ const nextConfig = {
   images: {
     domains: ['localhost'],
   },
-  webpack: (config) => {
+  webpack: config => {
     config.module.rules.push({
       test: /\.svg$/,
       use: ['@svgr/webpack'],
@@ -14,4 +14,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig; 
+export default nextConfig;

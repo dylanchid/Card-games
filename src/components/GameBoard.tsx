@@ -1,23 +1,28 @@
-import React, { useCallback, useState, Suspense, useMemo } from 'react';
+import React, { useCallback, useState, Suspense } from 'react';
 import { Stack } from './Stack';
-import { StackType, CardType, validateStack, validateCardPosition, isValidCardMove } from '../types/card';
+import {
+  StackType,
+  CardType,
+  validateStack,
+  validatePosition,
+  isValidCardMove,
+  DEFAULT_CARD_MOVE_RULES
+} from '../types/card';
 import { ErrorBoundary } from './ErrorBoundary';
 import './GameBoard.css';
 
 interface GameBoardProps {
   stacks: StackType[];
-  onCardMove?: (card: CardType, fromStackId: string, toStackId: string) => void;
+  onCardMove: (card: CardType, fromStackId: string, toStackId: string) => void;
   disabled?: boolean;
-  isLoading?: boolean;
+  isLoading: boolean;
 }
 
 const GameBoardError: React.FC<{ error: Error }> = ({ error }) => (
   <div className="game-board-error">
     <h2>Something went wrong</h2>
     <p>{error.message}</p>
-    <button onClick={() => window.location.reload()}>
-      Reload Game
-    </button>
+    <button onClick={() => window.location.reload()}>Reload Game</button>
   </div>
 );
 
@@ -29,103 +34,85 @@ const GameBoardLoading: React.FC = () => (
 );
 
 interface DragState {
-  stackId: string | null;
-  isValid: boolean;
   card: CardType | null;
+  sourceStackId: string | null;
+  targetStackId: string | null;
+  isValidDrop: boolean;
 }
 
-export const GameBoard: React.FC<GameBoardProps> = ({
-  stacks,
-  onCardMove,
-  disabled = false,
-  isLoading = false
-}) => {
-  const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
+export function GameBoard({ stacks, onCardMove, disabled = false, isLoading }: GameBoardProps) {
   const [error, setError] = useState<Error | null>(null);
   const [dragState, setDragState] = useState<DragState>({
-    stackId: null,
-    isValid: false,
-    card: null
+    card: null,
+    sourceStackId: null,
+    targetStackId: null,
+    isValidDrop: false
   });
 
-  // Memoize stack positions and validation rules
-  const stackPositions = useMemo(() => {
-    return stacks.reduce((acc, stack) => {
-      acc[stack.id] = {
-        x: stack.position.x,
-        y: stack.position.y,
-        width: 100,
-        height: 150
-      };
-      return acc;
-    }, {} as Record<string, { x: number; y: number; width: number; height: number }>);
-  }, [stacks]);
-
-  const handleCardClick = useCallback((card: CardType) => {
+  const handleCardClick = useCallback(() => {
     if (disabled) return;
-    setSelectedCard(card);
   }, [disabled]);
 
-  const handleDragStart = useCallback((card: CardType) => {
-    if (disabled) return;
-    setDragState(prev => ({ ...prev, card }));
-  }, [disabled]);
-
-  const handleDragOver = useCallback((stackId: string) => {
-    if (!dragState.card) return;
-
-    const fromStack = stacks.find(stack => stack.id === dragState.card?.stackId);
-    const toStack = stacks.find(stack => stack.id === stackId);
-
-    if (!fromStack || !toStack) return;
-
-    const isValid = isValidCardMove(dragState.card, fromStack, toStack);
-    setDragState(prev => ({ ...prev, stackId, isValid }));
-  }, [stacks, dragState.card]);
-
-  const handleDragLeave = useCallback(() => {
-    setDragState(prev => ({ ...prev, stackId: null, isValid: false }));
+  const handleDragStart = useCallback((card: CardType, stackId: string) => {
+    console.log('[GameBoard] Drag started:', { card, stackId });
+    setDragState({
+      card,
+      sourceStackId: stackId,
+      targetStackId: null,
+      isValidDrop: false
+    });
   }, []);
 
-  const handleCardDrop = useCallback((card: CardType, toStackId: string) => {
-    if (disabled || !onCardMove) return;
-    
-    try {
-      const fromStack = stacks.find(stack => stack.id === card.stackId);
-      if (!fromStack) {
-        throw new Error('Source stack not found');
-      }
+  const handleDragOver = useCallback((stackId: string) => {
+    if (!dragState.card || !dragState.sourceStackId) return;
 
-      if (!validateStack(fromStack)) {
-        throw new Error('Invalid source stack state');
-      }
+    const sourceStack = stacks.find(s => s.id === dragState.sourceStackId);
+    const targetStack = stacks.find(s => s.id === stackId);
 
-      const toStack = stacks.find(stack => stack.id === toStackId);
-      if (!toStack) {
-        throw new Error('Target stack not found');
-      }
+    if (!sourceStack || !targetStack) return;
 
-      if (!validateStack(toStack)) {
-        throw new Error('Invalid target stack state');
-      }
+    // Find applicable move rule
+    const moveRule = DEFAULT_CARD_MOVE_RULES.find(
+      rule => rule.fromStack === sourceStack.type && rule.toStack === targetStack.type
+    );
 
-      if (!validateCardPosition(card, toStack)) {
-        throw new Error('Invalid card position');
-      }
+    const isValidMove = moveRule ? moveRule.isValid(dragState.card, sourceStack, targetStack) : false;
 
-      if (!isValidCardMove(card, fromStack, toStack)) {
-        throw new Error('Invalid move according to game rules');
-      }
+    console.log('[GameBoard] Drag over:', {
+      card: dragState.card,
+      sourceStack: sourceStack.type,
+      targetStack: targetStack.type,
+      isValidMove
+    });
 
-      onCardMove(card, fromStack.id, toStackId);
-      setSelectedCard(null);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to move card'));
-    } finally {
-      setDragState({ stackId: null, isValid: false, card: null });
+    setDragState(prev => ({
+      ...prev,
+      targetStackId: stackId,
+      isValidDrop: isValidMove
+    }));
+  }, [dragState.card, dragState.sourceStackId, stacks]);
+
+  const handleDragEnd = useCallback(() => {
+    const { card, sourceStackId, targetStackId, isValidDrop } = dragState;
+
+    console.log('[GameBoard] Drag ended:', {
+      card,
+      sourceStackId,
+      targetStackId,
+      isValidDrop
+    });
+
+    if (card && sourceStackId && targetStackId && isValidDrop) {
+      onCardMove(card, sourceStackId, targetStackId);
     }
-  }, [stacks, onCardMove, disabled]);
+
+    setDragState({
+      card: null,
+      sourceStackId: null,
+      targetStackId: null,
+      isValidDrop: false
+    });
+  }, [dragState, onCardMove]);
 
   if (isLoading) {
     return <GameBoardLoading />;
@@ -137,24 +124,21 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   return (
     <ErrorBoundary FallbackComponent={GameBoardError}>
-      <div className="game-board">
-        <Suspense fallback={<GameBoardLoading />}>
-          {stacks.map(stack => (
-            <Stack
-              key={stack.id}
-              stack={stack}
-              onCardClick={handleCardClick}
-              onCardDrop={handleCardDrop}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              isDragOver={dragState.stackId === stack.id}
-              isValidDrop={dragState.isValid}
-              disabled={disabled}
-            />
-          ))}
-        </Suspense>
+      <div className="game-board w-full h-full">
+        {stacks.map((stack) => (
+          <Stack
+            key={stack.id}
+            stack={stack}
+            onCardClick={handleCardClick}
+            onDragStart={handleDragStart}
+            onDragOver={() => handleDragOver(stack.id)}
+            onDragEnd={handleDragEnd}
+            isDragTarget={stack.id === dragState.targetStackId}
+            isValidDrop={dragState.isValidDrop}
+            disabled={disabled}
+          />
+        ))}
       </div>
     </ErrorBoundary>
   );
-}; 
+}

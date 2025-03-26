@@ -4,7 +4,7 @@ export enum Suit {
   HEARTS = 'HEARTS',
   DIAMONDS = 'DIAMONDS',
   CLUBS = 'CLUBS',
-  SPADES = 'SPADES'
+  SPADES = 'SPADES',
 }
 
 export enum Rank {
@@ -20,7 +20,7 @@ export enum Rank {
   FIVE = 'FIVE',
   FOUR = 'FOUR',
   THREE = 'THREE',
-  TWO = 'TWO'
+  TWO = 'TWO',
 }
 
 export const SUITS = Object.values(Suit);
@@ -28,33 +28,35 @@ export const RANKS = Object.values(Rank);
 
 // Performance optimization: Memoized card values
 const CARD_VALUES = new Map<Rank, number>([
-  [Rank.ACE, 1],
-  [Rank.TWO, 2],
-  [Rank.THREE, 3],
-  [Rank.FOUR, 4],
-  [Rank.FIVE, 5],
-  [Rank.SIX, 6],
-  [Rank.SEVEN, 7],
-  [Rank.EIGHT, 8],
-  [Rank.NINE, 9],
-  [Rank.TEN, 10],
-  [Rank.JACK, 11],
+  [Rank.ACE, 14],
+  [Rank.KING, 13],
   [Rank.QUEEN, 12],
-  [Rank.KING, 13]
+  [Rank.JACK, 11],
+  [Rank.TEN, 10],
+  [Rank.NINE, 9],
+  [Rank.EIGHT, 8],
+  [Rank.SEVEN, 7],
+  [Rank.SIX, 6],
+  [Rank.FIVE, 5],
+  [Rank.FOUR, 4],
+  [Rank.THREE, 3],
+  [Rank.TWO, 2],
 ]);
 
 // Position validation schema with performance optimizations
-export const PositionSchema = z.object({
-  x: z.number().min(0),
-  y: z.number().min(0),
-  zIndex: z.number().min(0)
-}).transform(pos => ({
-  ...pos,
-  // Add computed properties for performance
-  centerX: pos.x + 50, // Assuming card width is 100
-  centerY: pos.y + 75, // Assuming card height is 150
-  distanceFromOrigin: Math.sqrt(pos.x * pos.x + pos.y * pos.y)
-}));
+export const PositionSchema = z
+  .object({
+    x: z.number().min(0),
+    y: z.number().min(0),
+    zIndex: z.number().min(0),
+  })
+  .transform(pos => ({
+    ...pos,
+    // Add computed properties for performance
+    centerX: pos.x + 50, // Assuming card width is 100
+    centerY: pos.y + 75, // Assuming card height is 150
+    distanceFromOrigin: Math.sqrt(pos.x * pos.x + pos.y * pos.y),
+  }));
 
 export interface Position {
   x: number;
@@ -69,10 +71,10 @@ export interface Position {
 export const CardSchema = z.object({
   id: z.string().uuid(),
   suit: z.nativeEnum(Suit, {
-    errorMap: () => ({ message: 'Invalid suit value' })
+    errorMap: () => ({ message: 'Invalid suit value' }),
   }),
   rank: z.nativeEnum(Rank, {
-    errorMap: () => ({ message: 'Invalid rank value' })
+    errorMap: () => ({ message: 'Invalid rank value' }),
   }),
   isFaceUp: z.boolean(),
   position: PositionSchema,
@@ -83,7 +85,7 @@ export const CardSchema = z.object({
   // Add animation states
   isAnimating: z.boolean().optional(),
   animationType: z.enum(['flip', 'move', 'scale']).optional(),
-  animationProgress: z.number().min(0).max(1).optional()
+  animationProgress: z.number().min(0).max(1).optional(),
 });
 
 export interface CardType {
@@ -101,28 +103,30 @@ export interface CardType {
 }
 
 // Stack validation schema with performance optimizations
-export const StackSchema = z.object({
-  id: z.string().uuid(),
-  cards: z.array(CardSchema),
-  position: PositionSchema,
-  isFaceUp: z.boolean(),
-  type: z.enum(['deck', 'hand', 'table', 'discard']),
-  owner: z.string().uuid().optional(),
-  // Add stack-specific states
-  isLoading: z.boolean().optional(),
-  error: z.string().optional(),
-  // Add performance optimizations
-  cardCount: z.number().min(0),
-  topCard: CardSchema.optional(),
-  bottomCard: CardSchema.optional()
-}).transform(stack => ({
-  ...stack,
-  // Add computed properties for performance
-  isEmpty: stack.cards.length === 0,
-  isFull: stack.cards.length >= 52, // Maximum possible cards
-  hasFaceUpCards: stack.cards.some(card => card.isFaceUp),
-  hasFaceDownCards: stack.cards.some(card => !card.isFaceUp)
-}));
+export const StackSchema = z
+  .object({
+    id: z.string().uuid(),
+    cards: z.array(CardSchema),
+    position: PositionSchema,
+    isFaceUp: z.boolean(),
+    type: z.enum(['deck', 'hand', 'table', 'discard']),
+    owner: z.string().uuid().optional(),
+    // Add stack-specific states
+    isLoading: z.boolean().optional(),
+    error: z.string().optional(),
+    // Add performance optimizations
+    cardCount: z.number().min(0),
+    topCard: CardSchema.optional(),
+    bottomCard: CardSchema.optional(),
+  })
+  .transform(stack => ({
+    ...stack,
+    // Add computed properties for performance
+    isEmpty: stack.cards.length === 0,
+    isFull: stack.cards.length >= 52, // Maximum possible cards
+    hasFaceUpCards: stack.cards.some(card => card.isFaceUp),
+    hasFaceDownCards: stack.cards.some(card => !card.isFaceUp),
+  }));
 
 export interface StackType {
   id: string;
@@ -198,9 +202,10 @@ export function isValidCardMove(card: CardType, fromStack: StackType, toStack: S
 
 // Performance optimized card comparison
 export function compareCards(a: CardType, b: CardType): number {
-  const rankOrder = Object.values(Rank).reverse();
-  const rankDiff = rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank);
-  if (rankDiff !== 0) return rankDiff;
+  const aValue = CARD_VALUES.get(a.rank) || 0;
+  const bValue = CARD_VALUES.get(b.rank) || 0;
+  const valueDiff = aValue - bValue;
+  if (valueDiff !== 0) return valueDiff;
   return SUITS.indexOf(a.suit) - SUITS.indexOf(b.suit);
 }
 
@@ -224,7 +229,7 @@ export function stringToCard(cardString: string): CardType {
       isFaceUp: true,
       position: { x: 0, y: 0, zIndex: 0 },
       isLoading: false,
-      isAnimating: false
+      isAnimating: false,
     };
   } catch (error) {
     console.error('String to card conversion error:', error);
@@ -244,18 +249,22 @@ export const DEFAULT_CARD_MOVE_RULES: CardMoveRule[] = [
   {
     fromStack: 'hand',
     toStack: 'table',
-    isValid: (card, fromStack, toStack) => {
-      if (!card.isFaceUp) return false;
-      if (toStack.isEmpty) return true;
-      const topCard = toStack.topCard;
-      return Boolean(topCard && (card.suit === topCard.suit || card.rank === topCard.rank));
+    isValid: (card: CardType, fromStack: StackType, toStack: StackType) => {
+      return card.isFaceUp && !toStack.isFull;
     }
   },
   {
     fromStack: 'deck',
     toStack: 'hand',
-    isValid: (card, fromStack, toStack) => {
-      return fromStack.type === 'deck' && toStack.type === 'hand';
+    isValid: (card: CardType, fromStack: StackType, toStack: StackType) => {
+      return !toStack.isFull;
+    }
+  },
+  {
+    fromStack: 'table',
+    toStack: 'discard',
+    isValid: (card: CardType, fromStack: StackType, toStack: StackType) => {
+      return card.isFaceUp;
     }
   }
 ];
@@ -270,17 +279,14 @@ export function createCardAnimation(
     ...card,
     isAnimating: true,
     animationType: type,
-    animationProgress: 0
+    animationProgress: 0,
   };
 }
 
-export function updateCardAnimation(
-  card: CardType,
-  progress: number
-): CardType {
+export function updateCardAnimation(card: CardType, progress: number): CardType {
   return {
     ...card,
-    animationProgress: Math.max(0, Math.min(1, progress))
+    animationProgress: Math.max(0, Math.min(1, progress)),
   };
 }
 
@@ -289,7 +295,7 @@ export function completeCardAnimation(card: CardType): CardType {
     ...card,
     isAnimating: false,
     animationType: undefined,
-    animationProgress: undefined
+    animationProgress: undefined,
   };
 }
 
@@ -299,14 +305,14 @@ export function createCardError(card: CardType, error: string): CardType {
     ...card,
     error,
     isLoading: false,
-    isAnimating: false
+    isAnimating: false,
   };
 }
 
 export function clearCardError(card: CardType): CardType {
   return {
     ...card,
-    error: undefined
+    error: undefined,
   };
 }
 
@@ -315,7 +321,7 @@ export function setCardLoading(card: CardType, isLoading: boolean): CardType {
   return {
     ...card,
     isLoading,
-    error: isLoading ? undefined : card.error
+    error: isLoading ? undefined : card.error,
   };
 }
 
@@ -328,7 +334,7 @@ export function measureCardPerformance(card: CardType): void {
 }
 
 export interface IDeck {
-  deal(numPlayers: number): { hands: CardType[][], turnUpCard: CardType };
+  deal(numPlayers: number): { hands: CardType[][]; turnUpCard: CardType };
   getCardsRemaining(): number;
 }
 
@@ -336,5 +342,5 @@ export enum GamePhaseType {
   WAITING = 'WAITING',
   BIDDING = 'BIDDING',
   PLAYING = 'PLAYING',
-  SCORING = 'SCORING'
-} 
+  SCORING = 'SCORING',
+}

@@ -1,30 +1,48 @@
 .card-stack {
-  position: absolute;
-  min-width: 2.5rem;
-  min-height: 3.5rem;
+  position: relative;
+  min-width: 100px;
+  min-height: 140px;
   padding: 0.5rem;
   border-radius: 0.5rem;
   transition: all 0.2s ease;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .card-stack.deck {
-  background: rgba(0, 0, 0, 0.1);
-  border: 2px dashed #666;
+  background: rgba(0, 0, 0, 0.2);
+  border: 2px dashed rgba(255, 255, 255, 0.5);
 }
 
 .card-stack.hand {
   background: rgba(255, 255, 255, 0.1);
-  border: 2px solid #fff;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  min-width: 80%;
+  max-width: 800px;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .card-stack.table {
-  background: rgba(0, 0, 0, 0.05);
-  border: 2px dashed #999;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  min-width: 200px;
+  min-height: 200px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 0.5rem;
+  padding: 1rem;
 }
 
 .card-stack.discard {
-  background: rgba(255, 0, 0, 0.1);
-  border: 2px dashed #f00;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
 }
 
 .card-stack:hover {
@@ -45,12 +63,35 @@
   background: rgba(34, 197, 94, 0.2);
   border-color: #22c55e;
   transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
 }
 
 .card-stack.invalid-drop {
   background: rgba(239, 68, 68, 0.2);
   border-color: #ef4444;
   animation: shake 0.5s ease-in-out;
+}
+
+/* Card stacking */
+.card-stack .playing-card {
+  position: absolute;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-stack.hand .playing-card {
+  position: relative;
+  margin-right: -1rem;
+}
+
+.card-stack.hand .playing-card:last-child {
+  margin-right: 0;
+}
+
+.card-stack.table .playing-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 /* Card wrapper animations */
@@ -80,25 +121,91 @@
 
 /* Animations */
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translate(-50%, 10px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .card-stack {
-    min-width: 2rem;
-    min-height: 2.8rem;
+    min-width: 80px;
+    min-height: 112px;
+  }
+
+  .card-stack.hand {
+    min-width: 90%;
+  }
+
+  .card-stack.table {
+    min-width: 150px;
+    min-height: 150px;
   }
 
   .drop-error {
     font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
   }
-} 
+}
+
+@media (max-width: 480px) {
+  .card-stack {
+    min-width: 60px;
+    min-height: 84px;
+  }
+
+  .card-stack.hand {
+    min-width: 95%;
+  }
+
+  .card-stack.table {
+    min-width: 120px;
+    min-height: 120px;
+  }
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+  .card-stack {
+    border: 2px solid CanvasText;
+  }
+
+  .card-stack.valid-drop {
+    border: 2px solid CanvasText;
+  }
+
+  .card-stack.invalid-drop {
+    border: 2px solid CanvasText;
+    opacity: 0.7;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .card-stack,
+  .card-stack .playing-card {
+    transition: none;
+  }
+
+  .card-stack.invalid-drop {
+    animation: none;
+  }
+}

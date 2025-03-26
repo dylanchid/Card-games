@@ -1,46 +1,131 @@
 .game-board {
-  position: relative;
   width: 100%;
-  height: 100vh;
-  background: #1a365d;
+  height: 100%;
+  position: relative;
+  background: linear-gradient(to bottom, #1a4731 0%, #166534 100%);
   overflow: hidden;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.game-board .flex {
+  display: flex;
+  gap: 1rem;
   align-items: center;
-  perspective: 1000px;
-  transform-style: preserve-3d;
+  justify-content: center;
+  width: 100%;
+}
+
+.game-board .loading {
+  color: white;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.card-stack {
+  position: relative;
+  width: 100px;
+  height: 140px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.card-stack.deck {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.card-stack.table {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.card-stack.valid-drop {
+  transform: scale(1.02);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.card-stack.invalid-drop {
+  transform: scale(0.98);
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.5);
+}
+
+/* Card positioning within stack */
+.card {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transition: all 0.3s ease;
+  cursor: grab;
+  user-select: none;
+  will-change: transform;
+}
+
+.card:active {
+  cursor: grabbing;
+}
+
+.card[data-face-up="true"] {
+  transform: rotateY(0deg);
+}
+
+.card[data-face-up="false"] {
+  transform: rotateY(180deg);
+}
+
+/* Stack hover effects */
+.card-stack:hover .card:not(:last-child) {
+  transform: translateY(-4px);
+}
+
+/* Drag and drop visual feedback */
+.card-stack.drag-over {
+  border: 2px dashed rgba(255, 255, 255, 0.5);
+}
+
+.card-stack.can-drop {
+  background: rgba(0, 255, 0, 0.1);
+}
+
+.card-stack.no-drop {
+  background: rgba(255, 0, 0, 0.1);
 }
 
 /* Stack positioning */
 .game-board .card-stack {
   position: absolute;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-style: preserve-3d;
-  will-change: transform;
 }
 
 .game-board .card-stack.deck {
-  top: 2rem;
-  left: 2rem;
-  transform: translateZ(0);
+  top: 1rem;
+  left: 1rem;
 }
 
 .game-board .card-stack.hand {
-  bottom: 2rem;
+  bottom: 1rem;
   left: 50%;
-  transform: translateX(-50%) translateZ(0);
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 800px;
 }
 
 .game-board .card-stack.table {
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) translateZ(0);
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
 }
 
 .game-board .card-stack.discard {
-  top: 2rem;
-  right: 2rem;
-  transform: translateZ(0);
+  top: 1rem;
+  right: 1rem;
 }
 
 /* Stack states */
@@ -48,12 +133,14 @@
   transform: scale(1.05) translateZ(20px);
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
   filter: brightness(1.1);
+  border-color: rgba(34, 197, 94, 0.5);
 }
 
 .game-board .card-stack.invalid-drop {
   transform: scale(0.95) translateZ(-20px);
   box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
   filter: brightness(0.9);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 /* Card stack animations */
@@ -79,27 +166,18 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  height: 100%;
   color: white;
-  font-size: 1.25rem;
-  gap: 1rem;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1000;
-  background: rgba(26, 54, 93, 0.8);
-  padding: 2rem;
-  border-radius: 1rem;
-  backdrop-filter: blur(4px);
 }
 
 .loading-spinner {
-  width: 3rem;
-  height: 3rem;
-  border: 4px solid rgba(255, 255, 255, 0.1);
-  border-left-color: white;
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
+  border-top-color: white;
   animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
 }
 
 /* Error state */
@@ -108,81 +186,30 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: white;
+  height: 100%;
+  color: #ff4444;
   text-align: center;
   padding: 2rem;
-  background: rgba(239, 68, 68, 0.1);
-  border-radius: 0.5rem;
-  max-width: 400px;
-  margin: 2rem;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1000;
-  backdrop-filter: blur(4px);
-  animation: errorAppear 0.3s ease-out;
-}
-
-@keyframes errorAppear {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -60%);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
 }
 
 .game-board-error h2 {
-  margin: 0 0 1rem;
-  color: #ef4444;
-}
-
-.game-board-error p {
-  margin: 0 0 1.5rem;
-  opacity: 0.9;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .game-board-error button {
-  background: #ef4444;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #ff4444;
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.25rem;
-  font-size: 1rem;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.game-board-error button::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.3s ease-out, height 0.3s ease-out;
-}
-
-.game-board-error button:hover::after {
-  width: 200%;
-  height: 200%;
+  transition: background-color 0.2s;
 }
 
 .game-board-error button:hover {
-  background: #dc2626;
-  transform: translateY(-2px);
-}
-
-.game-board-error button:active {
-  transform: translateY(0);
+  background-color: #ff6666;
 }
 
 /* Animations */
@@ -194,38 +221,49 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .game-board {
+    padding: 0.5rem;
+  }
+
+  .card-stack {
+    width: 80px;
+    height: 112px;
+  }
+
   .game-board .card-stack.deck {
-    top: 1rem;
-    left: 1rem;
+    top: 0.5rem;
+    left: 0.5rem;
   }
 
   .game-board .card-stack.hand {
-    bottom: 1rem;
+    bottom: 0.5rem;
+    width: 90%;
+  }
+
+  .game-board .card-stack.table {
+    width: 150px;
+    height: 150px;
   }
 
   .game-board .card-stack.discard {
-    top: 1rem;
-    right: 1rem;
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-stack {
+    width: 60px;
+    height: 84px;
   }
 
-  .game-board-error {
-    margin: 1rem;
-    padding: 1rem;
-    width: 90%;
-    max-width: 300px;
+  .game-board .card-stack.hand {
+    width: 95%;
   }
 
-  .game-board-error h2 {
-    font-size: 1.25rem;
-  }
-
-  .game-board-error p {
-    font-size: 0.875rem;
-  }
-
-  .game-board-error button {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
+  .game-board .card-stack.table {
+    width: 120px;
+    height: 120px;
   }
 }
 
@@ -268,4 +306,4 @@
   .game-board .card-stack:hover:not(.disabled) {
     animation: none;
   }
-} 
+}
