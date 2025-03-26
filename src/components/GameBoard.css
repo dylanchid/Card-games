@@ -1,0 +1,139 @@
+.game-board {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background: #1a365d;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Stack positioning */
+.game-board .card-stack.deck {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+}
+
+.game-board .card-stack.hand {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.game-board .card-stack.table {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.game-board .card-stack.discard {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+}
+
+/* Loading state */
+.game-board-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.25rem;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-left-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Error state */
+.game-board-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  padding: 2rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 0.5rem;
+  max-width: 400px;
+  margin: 2rem;
+}
+
+.game-board-error h2 {
+  margin: 0 0 1rem;
+  color: #ef4444;
+}
+
+.game-board-error p {
+  margin: 0 0 1.5rem;
+  opacity: 0.9;
+}
+
+.game-board-error button {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.game-board-error button:hover {
+  background: #dc2626;
+}
+
+/* Animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .game-board .card-stack.deck {
+    top: 1rem;
+    left: 1rem;
+  }
+
+  .game-board .card-stack.hand {
+    bottom: 1rem;
+  }
+
+  .game-board .card-stack.discard {
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .game-board-error {
+    margin: 1rem;
+    padding: 1rem;
+  }
+
+  .game-board-error h2 {
+    font-size: 1.25rem;
+  }
+
+  .game-board-error p {
+    font-size: 0.875rem;
+  }
+
+  .game-board-error button {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+} 
