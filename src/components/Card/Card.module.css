@@ -1,0 +1,384 @@
+:root {
+  --card-width: 100px;
+  --card-height: 140px;
+  --card-border-radius: 0.25rem;
+  --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  --card-border-color: #e2e8f0;
+  --card-red-color: #dc2626;
+  --card-black-color: #111827;
+  --card-background: #2c5282;
+  --card-back-pattern: #1a365d;
+  --card-error-color: #ef4444;
+  --card-error-background: #fee2e2;
+  --card-focus-color: #4299e1;
+  --card-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --card-disabled-opacity: 0.7;
+}
+
+.playingCard {
+  width: var(--card-width);
+  height: var(--card-height);
+  font-family: 'Arial', sans-serif;
+  background: white;
+  border-radius: var(--card-border-radius);
+  box-shadow: var(--card-shadow);
+  position: relative;
+  user-select: none;
+  transition: var(--card-transition);
+  border: 1px solid var(--card-border-color);
+  cursor: pointer;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  will-change: transform;
+  backface-visibility: hidden;
+  flex-shrink: 0;
+}
+
+.red {
+  color: var(--card-red-color);
+}
+
+.black {
+  color: var(--card-black-color);
+}
+
+.disabled {
+  opacity: var(--card-disabled-opacity);
+  cursor: not-allowed !important;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.selected:not(.disabled) {
+  transform: translateY(-10px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.faceDown {
+  transform: rotateY(180deg);
+}
+
+.faceDown .cardInner {
+  transform: rotateY(180deg);
+}
+
+.cardBack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(45deg, var(--card-back-pattern) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--card-back-pattern) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--card-back-pattern) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--card-back-pattern) 75%);
+  background-size: 20px 20px;
+  background-color: var(--card-background);
+  border: 2px solid var(--card-back-pattern);
+  border-radius: var(--card-border-radius);
+}
+
+.cardInner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: white;
+  border-radius: var(--card-border-radius);
+  overflow: hidden;
+  backface-visibility: hidden;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.cardFront {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  padding: 0.5rem;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.topLeft, .bottomRight {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.25rem;
+  background: white;
+  border-radius: var(--card-border-radius);
+  z-index: 1;
+}
+
+.topLeft {
+  top: 0.25rem;
+  left: 0.25rem;
+}
+
+.bottomRight {
+  bottom: 0.25rem;
+  right: 0.25rem;
+  transform: rotate(180deg);
+}
+
+.centerContent {
+  position: relative;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem;
+  margin: 2rem 0;
+}
+
+.faceCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: var(--card-border-radius);
+  padding: 0.5rem;
+}
+
+.numberCard {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.numberDisplay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 2rem;
+}
+
+.suitSymbol {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.rankDisplay {
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.cardSvg {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cardSvg svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.cardLoading {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: var(--card-border-radius);
+}
+
+.error {
+  background: var(--card-error-background);
+  border: 2px solid var(--card-error-color);
+}
+
+.errorMessage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--card-error-color);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+/* Hover effects */
+.playingCard:hover:not(.disabled) {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 20;
+}
+
+/* Drag and drop visual feedback */
+.playingCard[draggable='true']:hover:not(.disabled) {
+  cursor: grab;
+}
+
+.playingCard[draggable='true']:active:not(.disabled) {
+  cursor: grabbing;
+  transform: scale(1.1);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  opacity: 0.8;
+}
+
+/* Focus styles for accessibility */
+.playingCard:focus:not(.disabled) {
+  outline: 2px solid var(--card-focus-color);
+  outline-offset: 2px;
+}
+
+.playingCard:focus:not(:focus-visible) {
+  outline: none;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  :root {
+    --card-width: 80px;
+    --card-height: 112px;
+  }
+
+  .playingCard:hover:not(.disabled),
+  .selected:not(.disabled) {
+    transform: translateY(-5px);
+  }
+
+  .patternSymbol {
+    font-size: 1rem;
+  }
+
+  .patternEmpty {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .faceSymbol {
+    font-size: 2.5rem;
+  }
+
+  .faceSuitSymbol {
+    font-size: 1.5rem;
+  }
+
+  .topLeft, .bottomRight {
+    padding: 0.125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --card-width: 60px;
+    --card-height: 84px;
+  }
+
+  .patternSymbol {
+    font-size: 0.875rem;
+  }
+
+  .patternEmpty {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .faceSymbol {
+    font-size: 2rem;
+  }
+
+  .faceSuitSymbol {
+    font-size: 1.25rem;
+  }
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+  .playingCard {
+    border: 2px solid CanvasText;
+  }
+
+  .red,
+  .black {
+    color: CanvasText;
+  }
+
+  .cardBack {
+    background: CanvasText;
+  }
+
+  .disabled {
+    opacity: 0.5;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .playingCard,
+  .cardInner {
+    transition: none;
+  }
+
+  .playingCard:hover:not(.disabled),
+  .selected:not(.disabled),
+  .playingCard[draggable='true']:active:not(.disabled) {
+    transform: none;
+  }
+}
+
+.numberPattern {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 0.5rem;
+}
+
+.patternRow {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.patternSymbol {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.patternEmpty {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.faceSymbol {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.faceSuitSymbol {
+  font-size: 2rem;
+} 
