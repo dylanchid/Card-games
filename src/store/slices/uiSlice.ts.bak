@@ -1,0 +1,100 @@
+/**
+ * @fileoverview Redux slice for managing UI state
+ */
+
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+export interface Notification {
+  id: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  duration?: number;
+  autoDismiss?: boolean;
+}
+
+interface UIState {
+  theme: 'light' | 'dark' | 'system';
+  isMenuOpen: boolean;
+  isSettingsOpen: boolean;
+  isGameOver: boolean;
+  showTutorial: boolean;
+  notifications: Notification[];
+  isLoading: boolean;
+  activeModal: string | null;
+}
+
+const initialState: UIState = {
+  theme: 'system',
+  isMenuOpen: false,
+  isSettingsOpen: false,
+  isGameOver: false,
+  showTutorial: true,
+  notifications: [],
+  isLoading: false,
+  activeModal: null,
+};
+
+const uiSlice = createSlice({
+  name: 'ui',
+  initialState,
+  reducers: {
+    setTheme: (state, action: PayloadAction<'light' | 'dark' | 'system'>) => {
+      state.theme = action.payload;
+    },
+    toggleMenu: (state) => {
+      state.isMenuOpen = !state.isMenuOpen;
+    },
+    toggleSettings: (state) => {
+      state.isSettingsOpen = !state.isSettingsOpen;
+    },
+    setGameOver: (state, action: PayloadAction<boolean>) => {
+      state.isGameOver = action.payload;
+    },
+    setShowTutorial: (state, action: PayloadAction<boolean>) => {
+      state.showTutorial = action.payload;
+    },
+    addNotification: (state, action: PayloadAction<Omit<Notification, 'id'>>) => {
+      state.notifications.push({
+        ...action.payload,
+        id: `notification-${Date.now()}`,
+      });
+    },
+    removeNotification: (state, action: PayloadAction<string>) => {
+      state.notifications = state.notifications.filter(n => n.id !== action.payload);
+    },
+    clearAllNotifications: (state) => {
+      state.notifications = [];
+    },
+    setIsLoading: (state, action: PayloadAction<boolean>) => {
+      state.isLoading = action.payload;
+    },
+    setActiveModal: (state, action: PayloadAction<string | null>) => {
+      state.activeModal = action.payload;
+    },
+  },
+});
+
+export const {
+  setTheme,
+  toggleMenu,
+  toggleSettings,
+  setGameOver,
+  setShowTutorial,
+  addNotification,
+  removeNotification,
+  clearAllNotifications,
+  setIsLoading,
+  setActiveModal,
+} = uiSlice.actions;
+
+// Selectors
+export const selectTheme = (state: { ui: UIState }) => state.ui.theme;
+export const selectIsMenuOpen = (state: { ui: UIState }) => state.ui.isMenuOpen;
+export const selectIsSettingsOpen = (state: { ui: UIState }) => state.ui.isSettingsOpen;
+export const selectIsGameOver = (state: { ui: UIState }) => state.ui.isGameOver;
+export const selectShowTutorial = (state: { ui: UIState }) => state.ui.showTutorial;
+export const selectNotifications = (state: { ui: UIState }) => state.ui.notifications;
+export const selectIsLoading = (state: { ui: UIState }) => state.ui.isLoading;
+export const selectActiveModal = (state: { ui: UIState }) => state.ui.activeModal;
+
+export default uiSlice.reducer; 

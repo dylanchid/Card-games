@@ -1,14 +1,10 @@
 .game-board {
+  position: relative;
   width: 100%;
   height: 100%;
-  position: relative;
-  background: linear-gradient(to bottom, #1a4731 0%, #166534 100%);
-  overflow: hidden;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 1rem;
-  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
   user-select: none;
 }
 
@@ -28,8 +24,8 @@
 
 .card-stack {
   position: relative;
-  width: 100px;
-  height: 140px;
+  width: var(--card-width);
+  height: var(--card-height);
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.2);
   display: flex;
@@ -44,7 +40,19 @@
 }
 
 .card-stack.table {
-  background: rgba(255, 255, 255, 0.1);
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+}
+
+.card-stack.hand {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  min-width: 300px;
 }
 
 .card-stack.valid-drop {
@@ -61,11 +69,6 @@
   box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
 }
 
-.card-stack.dragging-over {
-  outline: 2px dashed rgba(255, 255, 255, 0.5);
-  outline-offset: -2px;
-}
-
 /* Card being dragged */
 .playing-card.dragging {
   opacity: 0.6;
@@ -74,108 +77,38 @@
   pointer-events: none;
 }
 
-/* Card positioning within stack */
-.card {
+/* Card positioning */
+.playing-card {
   position: absolute;
-  width: 100%;
-  height: 100%;
-  transition: all 0.3s ease;
+  width: var(--card-width);
+  height: var(--card-height);
+  transition: transform 0.3s ease, opacity 0.3s ease;
   cursor: grab;
   user-select: none;
   will-change: transform;
+  transform-origin: center center;
 }
 
-.card:active {
+.playing-card:active {
   cursor: grabbing;
 }
 
-.card[data-face-up="true"] {
-  transform: rotateY(0deg);
-}
-
-.card[data-face-up="false"] {
-  transform: rotateY(180deg);
-}
-
 /* Stack hover effects */
-.card-stack:not(.disabled):hover {
+.card-stack:not(.disabled):not(.play-area):not(.deck-area):not(.playerHand-area):hover {
   background: rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
   transition: all 0.2s ease;
 }
 
-/* Stack positioning */
-.game-board .card-stack {
+/* Loading state */
+.loading {
   position: absolute;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.game-board .card-stack.deck {
-  top: 1rem;
-  left: 1rem;
-}
-
-.game-board .card-stack.hand {
-  bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  max-width: 800px;
-}
-
-.game-board .card-stack.table {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 200px;
-  height: 200px;
-}
-
-.game-board .card-stack.discard {
-  top: 1rem;
-  right: 1rem;
-}
-
-/* Stack states */
-.game-board .card-stack.valid-drop {
-  transform: scale(1.05) translateZ(20px);
-  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
-  filter: brightness(1.1);
-  border-color: rgba(34, 197, 94, 0.5);
-}
-
-.game-board .card-stack.invalid-drop {
-  transform: scale(0.95) translateZ(-20px);
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
-  filter: brightness(0.9);
-  border-color: rgba(239, 68, 68, 0.5);
-}
-
-/* Card stack animations */
-@keyframes stackHover {
-  0% {
-    transform: translateZ(0);
-  }
-  50% {
-    transform: translateZ(10px);
-  }
-  100% {
-    transform: translateZ(0);
-  }
-}
-
-.game-board .card-stack:hover:not(.disabled) {
-  animation: stackHover 1s ease-in-out infinite;
-}
-
-/* Loading state */
-.game-board-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
   color: white;
+  font-size: 1.5rem;
+  text-align: center;
 }
 
 .loading-spinner {
@@ -190,11 +123,10 @@
 
 /* Error state */
 .game-board-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   color: #ff4444;
   text-align: center;
   padding: 2rem;
@@ -222,56 +154,24 @@
 
 /* Animations */
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-/* Responsive adjustments */
+/* Responsive design */
 @media (max-width: 768px) {
-  .game-board {
-    padding: 0.5rem;
-  }
-
-  .card-stack {
-    width: 80px;
-    height: 112px;
-  }
-
-  .game-board .card-stack.deck {
-    top: 0.5rem;
-    left: 0.5rem;
-  }
-
-  .game-board .card-stack.hand {
-    bottom: 0.5rem;
-    width: 90%;
-  }
-
-  .game-board .card-stack.table {
-    width: 150px;
-    height: 150px;
-  }
-
-  .game-board .card-stack.discard {
-    top: 0.5rem;
-    right: 0.5rem;
+  :root {
+    --card-width: 80px;
+    --card-height: 112px;
+    --game-padding: 1rem;
   }
 }
 
 @media (max-width: 480px) {
-  .card-stack {
-    width: 60px;
-    height: 84px;
-  }
-
-  .game-board .card-stack.hand {
-    width: 95%;
-  }
-
-  .game-board .card-stack.table {
-    width: 120px;
-    height: 120px;
+  :root {
+    --card-width: 60px;
+    --card-height: 84px;
+    --game-padding: 0.5rem;
   }
 }
 

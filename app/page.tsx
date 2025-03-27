@@ -1,110 +1,123 @@
 'use client';
 
-import { GameBoard } from '@/components/GameBoard';
-import { StackType, CardType, Suit, Rank } from '@/types/card';
-import { useState, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-
-function createDeck(): CardType[] {
-  const cards: CardType[] = [];
-  Object.values(Suit).forEach((suit, suitIndex) => {
-    Object.values(Rank).forEach((rank, rankIndex) => {
-      cards.push({
-        id: uuidv4(),
-        suit,
-        rank,
-        isFaceUp: false,
-        position: {
-          x: 0,
-          y: 0,
-          zIndex: suitIndex * Object.values(Rank).length + rankIndex
-        },
-      });
-    });
-  });
-  return cards;
-}
+import React, { useState } from 'react';
+import GameLoader from '../src/components/GameLoader';
+import GameProvider from '../src/components/GameProvider';
+import GameBoard from '../src/components/GameBoard';
+import PreGameScreen, { GameOptions } from '../src/components/PreGameScreen';
+import { CardGame } from '../src/types/game';
 
 export default function Home() {
-  const [stacks, setStacks] = useState<StackType[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedGame, setSelectedGame] = useState<CardGame | null>(null);
+  const [isGameLoaded, setIsGameLoaded] = useState(false);
+  const [showPreGameScreen, setShowPreGameScreen] = useState(false);
+  const [gameOptions, setGameOptions] = useState<GameOptions | null>(null);
 
-  useEffect(() => {
-    const initializeGame = () => {
-      const deckStack: StackType = {
-        id: 'deck',
-        cards: createDeck(),
-        position: { x: 0, y: 0, zIndex: 1 },
-        isFaceUp: false,
-        type: 'deck',
-        cardCount: 52,
-      };
+  const handleGameSelected = (game: CardGame) => {
+    setSelectedGame(game);
+    setShowPreGameScreen(true);
+  };
 
-      const testStack: StackType = {
-        id: 'test',
-        cards: [],
-        position: { x: 0, y: 0, zIndex: 1 },
-        isFaceUp: true,
-        type: 'table',
-        cardCount: 0,
-      };
+  const handleGameLoaded = (gameId: string) => {
+    setIsGameLoaded(true);
+    console.log(`Game ${gameId} loaded successfully`);
+  };
 
-      setStacks([deckStack, testStack]);
-      setIsLoading(false);
-    };
+  const handleGameStart = (options: GameOptions) => {
+    setGameOptions(options);
+    setShowPreGameScreen(false);
+  };
 
-    initializeGame();
-  }, []);
+  const handleBackToGameSelection = () => {
+    setSelectedGame(null);
+    setShowPreGameScreen(false);
+    setGameOptions(null);
+    setIsGameLoaded(false);
+  };
 
-  const handleCardMove = (card: CardType, fromStackId: string, toStackId: string) => {
-    setStacks(prevStacks => {
-      const fromStack = prevStacks.find(s => s.id === fromStackId);
-      const toStack = prevStacks.find(s => s.id === toStackId);
-      
-      if (!fromStack || !toStack) return prevStacks;
-
-      const cardIndex = fromStack.cards.findIndex(c => c.id === card.id);
-      if (cardIndex === -1) return prevStacks;
-
-      const updatedCard = {
-        ...card,
-        isFaceUp: toStack.isFaceUp,
-        position: {
-          x: 0,
-          y: 0,
-          zIndex: toStack.cards.length + 1
-        }
-      };
-
-      return prevStacks.map(stack => {
-        if (stack.id === fromStackId) {
-          return {
-            ...stack,
-            cards: stack.cards.filter(c => c.id !== card.id),
-            cardCount: stack.cardCount - 1
-          };
-        }
-        if (stack.id === toStackId) {
-          return {
-            ...stack,
-            cards: [...stack.cards, updatedCard],
-            cardCount: stack.cardCount + 1
-          };
-        }
-        return stack;
-      });
-    });
+  // Helper function to format game mode for display
+  const getGameModeDisplay = (mode: string): string => {
+    switch (mode) {
+      case 'vs-computer': return 'Against Computer';
+      case 'local': return 'Local Multiplayer';
+      case 'ranked': return 'Ranked Match';
+      default: return mode;
+    }
   };
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center bg-green-800 overflow-hidden">
-      <div className="w-full h-full relative">
-        <GameBoard 
-          stacks={stacks} 
-          onCardMove={handleCardMove} 
-          isLoading={isLoading} 
-        />
-      </div>
-    </div>
+    <main className="flex min-h-screen flex-col items-center justify-center p-6">
+      <h1 className="text-4xl font-bold mb-8">Card Game Platform</h1>
+      
+      <GameLoader
+        onGameSelected={handleGameSelected}
+        onGameLoaded={handleGameLoaded}
+      >
+        {selectedGame && showPreGameScreen && (
+          <PreGameScreen 
+            game={selectedGame}
+            onStart={handleGameStart}
+            onBack={handleBackToGameSelection}
+          />
+        )}
+        
+        {selectedGame && !showPreGameScreen && gameOptions && (
+          <GameProvider 
+            initialGame={selectedGame} 
+            gameOptions={gameOptions}
+          >
+            <div className="game-container w-full max-w-6xl">
+              <div className="game-info mb-4 flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-semibold">{selectedGame.name}</h2>
+                  <p className="text-gray-600">{selectedGame.description}</p>
+                </div>
+                <button
+                  onClick={handleBackToGameSelection}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md transition-colors"
+                >
+                  Back to Games
+                </button>
+              </div>
+              
+              {isGameLoaded ? (
+                <GameBoard className="shadow-lg" />
+              ) : (
+                <div className="game-board bg-green-800 rounded-xl p-8 shadow-lg min-h-[600px] flex flex-col items-center justify-center">
+                  <p className="text-white">Loading game components...</p>
+                </div>
+              )}
+              
+              <div className="game-info mt-4">
+                <div className="bg-white p-4 rounded shadow-md">
+                  <h3 className="font-medium mb-2">Game Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="text-sm font-semibold">Rules</h4>
+                      <ul className="list-disc list-inside text-sm">
+                        <li>Game Mode: {getGameModeDisplay(gameOptions.gameMode)}</li>
+                        <li>Players: {gameOptions.playerCount}</li>
+                        <li>Cards per player: {gameOptions.cardsPerPlayer}</li>
+                        <li>Rounds: {gameOptions.maxRounds}</li>
+                        {selectedGame.settings.specialRules?.bidding && <li>Includes bidding phase</li>}
+                        {gameOptions.allowTrump && <li>Uses trump cards</li>}
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold">Players</h4>
+                      <ul className="list-disc list-inside text-sm">
+                        {gameOptions.playerNames.slice(0, gameOptions.playerCount).map((name, index) => (
+                          <li key={index}>{name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </GameProvider>
+        )}
+      </GameLoader>
+    </main>
   );
 }

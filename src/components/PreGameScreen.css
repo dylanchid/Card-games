@@ -1,0 +1,135 @@
+.pre-game-screen {
+  min-height: 600px;
+  background-color: #ffffff;
+  background-image: linear-gradient(to bottom, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.97) 100%), 
+                    url('/images/card-pattern-bg.svg');
+  background-size: cover;
+  background-position: center;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.game-info {
+  border-left: 4px solid #10b981;
+  padding-left: 1rem;
+  animation: slideIn 0.5s ease-in-out 0.1s both;
+}
+
+.game-options {
+  border-left: 4px solid #3b82f6;
+  padding-left: 1rem;
+  animation: slideIn 0.5s ease-in-out 0.2s both;
+}
+
+.player-names {
+  border-left: 4px solid #f59e0b;
+  padding-left: 1rem;
+  animation: slideIn 0.5s ease-in-out 0.3s both;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.form-group label {
+  color: #4b5563;
+}
+
+.form-group select,
+.form-group input[type="text"] {
+  border-color: #d1d5db;
+  transition: border-color 0.2s;
+}
+
+.form-group select:focus,
+.form-group input[type="text"]:focus {
+  border-color: #10b981;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.start-button {
+  background-color: #10b981;
+  color: white;
+  transition: background-color 0.2s;
+  animation: pulseButton 2s infinite ease-in-out;
+}
+
+.start-button:hover {
+  background-color: #059669;
+  animation: none;
+}
+
+@keyframes pulseButton {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+@media (max-width: 768px) {
+  .pre-game-screen {
+    padding: 1rem;
+  }
+  
+  .game-info,
+  .game-options,
+  .player-names {
+    border-left: none;
+    border-top: 4px solid;
+    padding-left: 0;
+    padding-top: 1rem;
+    animation: slideDown 0.5s ease-in-out both;
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .game-info {
+    border-top-color: #10b981;
+    animation-delay: 0.1s;
+  }
+  
+  .game-options {
+    border-top-color: #3b82f6;
+    animation-delay: 0.2s;
+  }
+  
+  .player-names {
+    border-top-color: #f59e0b;
+    animation-delay: 0.3s;
+  }
+} 

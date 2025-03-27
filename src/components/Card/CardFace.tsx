@@ -1,39 +1,13 @@
 import React, { memo } from 'react';
-import { CardType, getCardColor, isFaceCard, Suit, Rank } from '../../types/card';
+import { CardType, getCardColor, isFaceCard, Suit, Rank, CardFaceProps, SUIT_SYMBOLS, RANK_DISPLAY, FACE_SYMBOLS } from '../../types/card';
 import styles from './Card.module.css';
 
-interface CardFaceProps {
-  isLoading: boolean;
-  card: CardType;
-}
-
 const SuitSymbol: React.FC<{ suit: Suit; className?: string }> = ({ suit, className }) => {
-  const symbols: Record<Suit, string> = {
-    [Suit.HEARTS]: '♥',
-    [Suit.DIAMONDS]: '♦',
-    [Suit.CLUBS]: '♣',
-    [Suit.SPADES]: '♠',
-  };
-  return <span className={`${styles.suitSymbol} ${className || ''}`}>{symbols[suit]}</span>;
+  return <span className={`${styles.suitSymbol} ${className || ''}`}>{SUIT_SYMBOLS[suit]}</span>;
 };
 
 const RankDisplay: React.FC<{ rank: Rank; className?: string }> = ({ rank, className }) => {
-  const displayMap: Record<Rank, string> = {
-    [Rank.ACE]: 'A',
-    [Rank.KING]: 'K',
-    [Rank.QUEEN]: 'Q',
-    [Rank.JACK]: 'J',
-    [Rank.TEN]: '10',
-    [Rank.NINE]: '9',
-    [Rank.EIGHT]: '8',
-    [Rank.SEVEN]: '7',
-    [Rank.SIX]: '6',
-    [Rank.FIVE]: '5',
-    [Rank.FOUR]: '4',
-    [Rank.THREE]: '3',
-    [Rank.TWO]: '2',
-  };
-  return <span className={`${styles.rankDisplay} ${className || ''}`}>{displayMap[rank]}</span>;
+  return <span className={`${styles.rankDisplay} ${className || ''}`}>{RANK_DISPLAY[rank]}</span>;
 };
 
 const getCardPattern = (rank: Rank): number[][] => {
@@ -81,25 +55,9 @@ const NumberCardPattern: React.FC<{ rank: Rank; suit: Suit }> = ({ rank, suit })
 };
 
 const FaceCardContent: React.FC<{ rank: Rank; suit: Suit }> = ({ rank, suit }) => {
-  const faceSymbols: Record<Rank, string> = {
-    [Rank.KING]: '♔',
-    [Rank.QUEEN]: '♕',
-    [Rank.JACK]: '♖',
-    [Rank.ACE]: '♠',
-    [Rank.TWO]: '',
-    [Rank.THREE]: '',
-    [Rank.FOUR]: '',
-    [Rank.FIVE]: '',
-    [Rank.SIX]: '',
-    [Rank.SEVEN]: '',
-    [Rank.EIGHT]: '',
-    [Rank.NINE]: '',
-    [Rank.TEN]: '',
-  };
-
   return (
     <div className={styles.faceCard}>
-      <span className={styles.faceSymbol}>{faceSymbols[rank]}</span>
+      <span className={styles.faceSymbol}>{FACE_SYMBOLS[rank]}</span>
       <SuitSymbol suit={suit} className={styles.faceSuitSymbol} />
     </div>
   );

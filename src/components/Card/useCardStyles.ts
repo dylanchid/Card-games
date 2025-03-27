@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { CardType, getCardColor } from '../../types/card';
+import { CardType } from '../../types/card';
 import styles from './Card.module.css';
 
 export const useCardStyles = (
@@ -12,7 +12,6 @@ export const useCardStyles = (
   const cardClasses = useMemo(() => {
     const classes = [
       styles.playingCard,
-      getCardColor(card) === 'red' ? styles.red : styles.black,
     ];
 
     if (selected) classes.push(styles.selected);

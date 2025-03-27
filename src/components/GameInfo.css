@@ -1,0 +1,151 @@
+.game-info {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 0.5rem;
+  color: white;
+  max-width: 18rem;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.game-status {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.5rem;
+}
+
+.game-status h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.game-status p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.trump-card {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.5rem;
+}
+
+.trump-card h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.trump-display {
+  display: flex;
+  justify-content: center;
+}
+
+.trump-display .card {
+  width: 3.5rem;
+  height: 5rem;
+  background-color: white;
+  border-radius: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: black;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.trump-display .card.hearts,
+.trump-display .card.diamonds {
+  color: #e61919;
+}
+
+.trump-display .card.clubs,
+.trump-display .card.spades {
+  color: #000000;
+}
+
+.card-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.card-suit {
+  font-size: 1.5rem;
+}
+
+.player-bids,
+.scores {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.5rem;
+}
+
+.player-bids h3,
+.scores h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.bid-list,
+.score-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.player-bid,
+.player-score {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.player-name {
+  font-weight: bold;
+  flex: 1;
+}
+
+.bid-value,
+.score-value {
+  margin: 0 0.5rem;
+}
+
+.tricks-won {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.bid-cards {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.mini-card {
+  width: 1.5rem;
+  height: 1.5rem;
+  background-color: white;
+  border-radius: 0.2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.mini-card.hearts,
+.mini-card.diamonds {
+  color: #e61919;
+}
+
+.mini-card.clubs,
+.mini-card.spades {
+  color: #000000;
+} 

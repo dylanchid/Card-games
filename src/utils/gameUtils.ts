@@ -1,8 +1,13 @@
 import { CardType, Suit, Rank } from '@/types/card';
-import { Player } from '@/store/gameSlice';
+import { Player } from '@/store/slices/gameSlice';
 import { v4 as uuidv4 } from 'uuid';
 
-export function createDeck(): CardType[] {
+export function createDeck(gameType: string = 'standard'): CardType[] {
+  if (gameType === 'ninety-nine') {
+    return createNinetyNineDeck();
+  }
+  
+  // Standard 52-card deck for other games
   const cards: CardType[] = [];
   Object.values(Suit).forEach((suit, suitIndex) => {
     Object.values(Rank).forEach((rank, rankIndex) => {
@@ -19,6 +24,49 @@ export function createDeck(): CardType[] {
       });
     });
   });
+  return shuffleDeck(cards);
+}
+
+/**
+ * Creates a specialized deck for Ninety-Nine: 37 cards (6 through Ace in each suit + 1 joker)
+ */
+export function createNinetyNineDeck(): CardType[] {
+  const cards: CardType[] = [];
+  const ninetyNineRanks = [
+    Rank.SIX, Rank.SEVEN, Rank.EIGHT, Rank.NINE, Rank.TEN, 
+    Rank.JACK, Rank.QUEEN, Rank.KING, Rank.ACE
+  ];
+  
+  // Add 6 through Ace for each suit
+  Object.values(Suit).forEach((suit, suitIndex) => {
+    ninetyNineRanks.forEach((rank, rankIndex) => {
+      cards.push({
+        id: uuidv4(),
+        suit,
+        rank,
+        isFaceUp: false,
+        position: {
+          x: 0,
+          y: 0,
+          zIndex: suitIndex * ninetyNineRanks.length + rankIndex
+        },
+      });
+    });
+  });
+  
+  // Add the joker
+  cards.push({
+    id: uuidv4(),
+    suit: 'JOKER' as Suit,
+    rank: 'JOKER' as Rank,
+    isFaceUp: false,
+    position: {
+      x: 0,
+      y: 0,
+      zIndex: 100
+    },
+  });
+  
   return shuffleDeck(cards);
 }
 
@@ -48,7 +96,7 @@ export function dealCards(deck: CardType[], numPlayers: number, cardsPerPlayer: 
     }
   }
 
-  // Set aside turnup card
+  // Set aside turnup card for trump
   const turnupCard = deck.pop() || null;
   if (turnupCard) {
     turnupCard.isFaceUp = true;
@@ -84,6 +132,8 @@ export function determineTrickWinner(
   leadSuit: Suit,
   trumpSuit: Suit | null
 ): number {
+  if (!trick || trick.length === 0) return 0;
+  
   let winningCard = trick[0];
   let winnerIndex = 0;
 
@@ -92,9 +142,23 @@ export function determineTrickWinner(
     if (!currentCard) continue;
 
     if (currentCard.suit === trumpSuit && winningCard.suit !== trumpSuit) {
+      // Trump card beats non-trump
       winningCard = currentCard;
       winnerIndex = i;
-    } else if (currentCard.suit === winningCard.suit) {
+    } else if (currentCard.suit === trumpSuit && winningCard.suit === trumpSuit) {
+      // Compare two trump cards
+      if (getCardValue(currentCard) > getCardValue(winningCard)) {
+        winningCard = currentCard;
+        winnerIndex = i;
+      }
+    } else if (currentCard.suit === leadSuit && winningCard.suit !== trumpSuit) {
+      // Lead suit beats other non-trump suits
+      if (winningCard.suit !== leadSuit || getCardValue(currentCard) > getCardValue(winningCard)) {
+        winningCard = currentCard;
+        winnerIndex = i;
+      }
+    } else if (currentCard.suit === winningCard.suit && currentCard.suit !== trumpSuit) {
+      // Same suit (not trump or lead), higher value wins
       if (getCardValue(currentCard) > getCardValue(winningCard)) {
         winningCard = currentCard;
         winnerIndex = i;
@@ -106,6 +170,8 @@ export function determineTrickWinner(
 }
 
 export function getCardValue(card: CardType): number {
+  if (card.rank === 'JOKER' as Rank) return 15; // Joker is highest
+  
   const values: Record<Rank, number> = {
     [Rank.ACE]: 14,
     [Rank.KING]: 13,
@@ -121,26 +187,74 @@ export function getCardValue(card: CardType): number {
     [Rank.THREE]: 3,
     [Rank.TWO]: 2,
   };
-  return values[card.rank];
+  return values[card.rank] || 0;
 }
 
+/**
+ * Calculates the bid value based on the bid cards (using suits as numbers)
+ * ♣=3, ♥=2, ♠=1, ♦=0
+ */
+export function calculateBidValue(bidCards: CardType[]): number {
+  if (!bidCards || bidCards.length === 0) return 0;
+  
+  const suitValues: Record<Suit, number> = {
+    [Suit.CLUBS]: 3,
+    [Suit.HEARTS]: 2,
+    [Suit.SPADES]: 1,
+    [Suit.DIAMONDS]: 0,
+    ['JOKER' as Suit]: 0
+  };
+  
+  return bidCards.reduce((total, card) => {
+    return total + suitValues[card.suit];
+  }, 0);
+}
+
+/**
+ * Calculate player score for Ninety-Nine
+ * Accounts for contract fulfillment and declarations
+ */
 export function calculatePlayerScore(
   player: Player,
   tricksWon: number,
   bidCards: CardType[]
 ): number {
-  // Basic scoring: 10 points per trick
-  const baseScore = tricksWon * 10;
-
-  // Bonus points for successful bid
-  const bidBonus = bidCards.length > 0 ? 20 : 0;
-
-  return baseScore + bidBonus;
+  // Calculate bid value
+  const bidValue = calculateBidValue(bidCards);
+  
+  // Base score depends on contract fulfillment (winning exactly the number of tricks bid)
+  let score = 0;
+  
+  if (tricksWon === bidValue) {
+    // Contract fulfilled - base score of 10 points per trick won
+    score = tricksWon * 10;
+    
+    // Additional bonus for making a contract
+    score += 30;
+  } else {
+    // Failed contract - penalty of 10 points per trick over/under the bid
+    const difference = Math.abs(tricksWon - bidValue);
+    score = -10 * difference;
+  }
+  
+  // Premium for declarations
+  const hasDeclaration = player.hasDeclaration || false;
+  if (hasDeclaration) {
+    score += 20; // Additional points for successful declaration
+  }
+  
+  return score;
 }
 
 export function isGameOver(players: Player[]): boolean {
-  // Game ends when all tricks are played (9 tricks in a standard game)
-  const maxTricks = 9;
-  const totalTricksWon = players.reduce((sum, player) => sum + player.tricksWon, 0);
-  return totalTricksWon >= maxTricks;
+  // Game ends when a player reaches 100 points
+  return players.some(player => player.score >= 100);
+}
+
+/**
+ * Determines trump suit for the game based on the turnup card
+ */
+export function determineTrumpSuit(turnupCard: CardType | null): Suit | null {
+  if (!turnupCard) return null;
+  return turnupCard.suit;
 } 

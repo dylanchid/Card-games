@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import type { RootState, AppDispatch } from './store';
 import { setLoading, setError } from './gameSlice';
-import { createDeck, dealCards } from '@/utils/gameUtils';
+import { createDeck, dealCards } from '../utils/gameUtils';
 
 export const initializeGame = createAsyncThunk(
   'game/initializeGame',

@@ -1,23 +1,22 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+'use client';
+
+import { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
-  FallbackComponent: React.ComponentType<{ error: Error }>;
 }
 
 interface State {
   hasError: boolean;
-  error: Error | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
-    hasError: false,
-    error: null,
+    hasError: false
   };
 
-  public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+  public static getDerivedStateFromError(_: Error): State {
+    return { hasError: true };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -25,8 +24,15 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public render() {
-    if (this.state.hasError && this.state.error) {
-      return <this.props.FallbackComponent error={this.state.error} />;
+    if (this.state.hasError) {
+      return (
+        <div className="error-container">
+          <h2>Something went wrong.</h2>
+          <button onClick={() => this.setState({ hasError: false })}>
+            Try again
+          </button>
+        </div>
+      );
     }
 
     return this.props.children;

@@ -1,78 +1,60 @@
 import React, { useCallback } from 'react';
-import { Card } from './Card';
-import { CardType, GamePhase } from '@/types/card';
+import { Card } from './Card/Card';
+import { CardType, GamePhaseType } from '@/types/card';
 import './PlayerHand.css';
 
 interface PlayerHandProps {
   cards: CardType[];
-  phase: GamePhase;
-  isCurrentTurn: boolean;
+  onCardClick: (card: CardType) => void;
   selectedCards: CardType[];
-  onCardSelect: (card: CardType) => void;
-  maxSelectable: number;
+  disabled?: boolean;
+  phase?: GamePhaseType;
 }
 
-const PlayerHand: React.FC<PlayerHandProps> = ({
+export const PlayerHand: React.FC<PlayerHandProps> = ({
   cards,
-  phase,
-  isCurrentTurn,
+  onCardClick,
   selectedCards,
-  onCardSelect,
-  maxSelectable
+  disabled = false,
+  phase = GamePhaseType.PLAYING
 }) => {
-  const isCardSelected = useCallback((card: CardType) => {
-    return selectedCards.some(
-      selected => selected.id === card.id
-    );
-  }, [selectedCards]);
+  const handleCardClick = useCallback(
+    (card: CardType) => {
+      if (!disabled) {
+        onCardClick(card);
+      }
+    },
+    [disabled, onCardClick]
+  );
 
-  const isCardSelectable = useCallback((card: CardType) => {
-    if (!isCurrentTurn) return false;
-    if (phase === 'WAITING' || phase === 'SCORING') return false;
-
-    if (phase === 'BIDDING') {
-      // Can't select Joker for bidding
-      if (card.rank === 'Joker') return false;
-      // Can't select more than maxSelectable cards
-      if (selectedCards.length >= maxSelectable && !isCardSelected(card)) return false;
-      return true;
-    }
-
-    if (phase === 'PLAYING') {
-      // Can only select one card during play phase
-      if (selectedCards.length >= 1 && !isCardSelected(card)) return false;
-      return true;
-    }
-
-    return false;
-  }, [isCurrentTurn, phase, selectedCards.length, maxSelectable, isCardSelected]);
-
-  const handleCardClick = useCallback((card: CardType) => {
-    if (isCardSelectable(card)) {
-      onCardSelect(card);
-    }
-  }, [isCardSelectable, onCardSelect]);
+  const isCardSelected = useCallback(
+    (card: CardType) => {
+      return selectedCards.some(selectedCard => selectedCard.id === card.id);
+    },
+    [selectedCards]
+  );
 
   return (
     <div className="player-hand">
-      {cards.map((card, index) => (
-        <div key={card.id} className="card-wrapper">
+      {cards.map((card, index) => {
+        const offset = index * 30;
+        const selected = isCardSelected(card);
+
+        return (
           <Card
+            key={card.id}
             card={card}
             onClick={() => handleCardClick(card)}
-            selectable={isCardSelectable(card)}
-            selected={isCardSelected(card)}
-            disabled={!isCardSelectable(card)}
+            selected={selected}
+            disabled={disabled}
             index={index}
             style={{
-              transform: `translateX(${index * 30}px)`,
-              zIndex: cards.length - index
+              transform: `translateX(${offset}px)`,
+              zIndex: index,
             }}
           />
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
-};
-
-export default PlayerHand; 
+}; 

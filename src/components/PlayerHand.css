@@ -11,10 +11,6 @@
   transition: all 0.3s ease;
 }
 
-.player-hand:hover {
-  background: rgba(0, 0, 0, 0.3);
-}
-
 .card-wrapper {
   position: relative;
   transition: transform 0.3s ease;
@@ -23,11 +19,6 @@
 
 .card-wrapper:last-child {
   margin-right: 0;
-}
-
-.card-wrapper:hover {
-  transform: translateY(-10px);
-  z-index: 10;
 }
 
 /* Card selection animation */

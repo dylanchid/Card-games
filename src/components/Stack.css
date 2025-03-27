@@ -15,6 +15,37 @@
 .card-stack.deck {
   background: rgba(0, 0, 0, 0.2);
   border: 2px dashed rgba(255, 255, 255, 0.5);
+  width: var(--card-width);
+  height: var(--card-height);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  overflow: visible;
+}
+
+.card-stack.deck .playing-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+  cursor: grab;
+}
+
+.card-stack.deck .playing-card:hover {
+  transform: translateY(-5px);
+}
+
+.card-stack.deck .playing-card.dragging {
+  cursor: grabbing;
+  opacity: 0.8;
+  transform: scale(1.05);
+  z-index: 1000 !important;
 }
 
 .card-stack.hand {
@@ -27,6 +58,7 @@
   padding: 0.5rem;
   justify-content: center;
   flex-wrap: wrap;
+  overflow: visible;
 }
 
 .card-stack.table {
@@ -38,6 +70,7 @@
   grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
   gap: 0.5rem;
   padding: 1rem;
+  overflow: visible;
 }
 
 .card-stack.discard {
@@ -45,16 +78,18 @@
   border: 2px dashed rgba(255, 255, 255, 0.3);
 }
 
-.card-stack:hover {
+/* Only apply hover effects to stacks that are not in play-area, deck-area, or playerHand-area */
+.card-stack:not(.play-area):not(.deck-area):not(.playerHand-area):hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
 /* Stack-specific animations */
-.card-stack.deck:hover {
-  transform: scale(1.05);
+.card-stack.deck:not(.deck-area):hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-.card-stack.hand:hover {
+.card-stack.hand:not(.playerHand-area):hover {
   transform: translateY(-5px);
 }
 
@@ -76,6 +111,9 @@
 .card-stack .playing-card {
   position: absolute;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+  transform-origin: center center;
+  backface-visibility: hidden;
 }
 
 .card-stack.hand .playing-card {
@@ -91,7 +129,6 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
 }
 
 /* Card wrapper animations */

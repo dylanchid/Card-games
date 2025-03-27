@@ -1,0 +1,134 @@
+/**
+ * @fileoverview Redux slice for managing card stacks and card-related state
+ */
+
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { CardType, StackType } from '@/types/card';
+
+interface CardState {
+  stacks: Record<string, StackType>;
+  draggingCard: CardType | null;
+  dragSource: string | null;
+  selectedCard: CardType | null;
+  hoveredCard: CardType | null;
+}
+
+const initialState: CardState = {
+  stacks: {},
+  draggingCard: null,
+  dragSource: null,
+  selectedCard: null,
+  hoveredCard: null,
+};
+
+const cardSlice = createSlice({
+  name: 'cards',
+  initialState,
+  reducers: {
+    setStacks: (state, action: PayloadAction<Record<string, StackType>>) => {
+      state.stacks = action.payload;
+    },
+    setDraggingCard: (state, action: PayloadAction<{ card: CardType | null; source: string | null }>) => {
+      state.draggingCard = action.payload.card;
+      state.dragSource = action.payload.source;
+    },
+    setSelectedCard: (state, action: PayloadAction<CardType | null>) => {
+      state.selectedCard = action.payload;
+    },
+    updateStack: (state, action: PayloadAction<{ id: string; stack: StackType }>) => {
+      state.stacks[action.payload.id] = action.payload.stack;
+    },
+    setHoveredCard: (state, action: PayloadAction<CardType | null>) => {
+      state.hoveredCard = action.payload;
+    },
+    moveCard: (state, action: PayloadAction<{ 
+      cardId: string; 
+      fromStack: string; 
+      toStack: string; 
+      position: number;
+    }>) => {
+      const { cardId, fromStack, toStack, position } = action.payload;
+      const card = state.stacks[fromStack]?.cards.find(c => c.id === cardId);
+      if (card && state.stacks[fromStack] && state.stacks[toStack]) {
+        state.stacks[fromStack].cards = state.stacks[fromStack].cards.filter(c => c.id !== cardId);
+        state.stacks[toStack].cards.splice(position, 0, card);
+      }
+    },
+    // Add a card to a stack
+    addCardToStack: (state, action: PayloadAction<{
+      card: CardType;
+      stackId: string;
+      position?: number;
+    }>) => {
+      const { card, stackId, position } = action.payload;
+      if (state.stacks[stackId]) {
+        if (position !== undefined) {
+          state.stacks[stackId].cards.splice(position, 0, card);
+        } else {
+          state.stacks[stackId].cards.push(card);
+        }
+      }
+    },
+    // Remove a card from a stack
+    removeCardFromStack: (state, action: PayloadAction<{
+      cardId: string;
+      stackId: string;
+    }>) => {
+      const { cardId, stackId } = action.payload;
+      if (state.stacks[stackId]) {
+        state.stacks[stackId].cards = state.stacks[stackId].cards.filter(c => c.id !== cardId);
+      }
+    },
+    // Flip a card
+    flipCard: (state, action: PayloadAction<{
+      cardId: string;
+      stackId: string;
+    }>) => {
+      const { cardId, stackId } = action.payload;
+      if (state.stacks[stackId]) {
+        const cardIndex = state.stacks[stackId].cards.findIndex(c => c.id === cardId);
+        if (cardIndex !== -1) {
+          state.stacks[stackId].cards[cardIndex].isFaceUp = !state.stacks[stackId].cards[cardIndex].isFaceUp;
+        }
+      }
+    },
+    // Clear all stacks
+    clearStacks: (state) => {
+      state.stacks = {};
+    }
+  },
+});
+
+export const { 
+  setStacks, 
+  updateStack, 
+  setDraggingCard, 
+  setSelectedCard,
+  setHoveredCard,
+  moveCard,
+  addCardToStack,
+  removeCardFromStack,
+  flipCard,
+  clearStacks
+} = cardSlice.actions;
+
+// Selectors
+export const selectAllStacks = (state: { cards: CardState }) => 
+  state.cards.stacks;
+
+export const selectStackById = (state: { cards: CardState }, stackId: string) => 
+  state.cards.stacks[stackId];
+
+export const selectDraggingCard = (state: { cards: CardState }) => 
+  state.cards.draggingCard;
+
+export const selectDragSource = (state: { cards: CardState }) => 
+  state.cards.dragSource;
+
+export const selectSelectedCard = (state: { cards: CardState }) => 
+  state.cards.selectedCard;
+
+export const selectHoveredCard = (state: { cards: CardState }) => 
+  state.cards.hoveredCard;
+
+export default cardSlice.reducer; 
