@@ -6,6 +6,7 @@ export enum Suit {
   DIAMONDS = 'DIAMONDS',
   CLUBS = 'CLUBS',
   SPADES = 'SPADES',
+  JOKER = 'JOKER',
 }
 
 export enum Rank {
@@ -22,6 +23,7 @@ export enum Rank {
   FOUR = 'FOUR',
   THREE = 'THREE',
   TWO = 'TWO',
+  JOKER = 'JOKER',
 }
 
 export const SUITS = Object.values(Suit);
@@ -40,6 +42,7 @@ export const SUIT_SYMBOLS: Record<Suit, string> = {
   [Suit.DIAMONDS]: '♦',
   [Suit.CLUBS]: '♣',
   [Suit.SPADES]: '♠',
+  [Suit.JOKER]: '★',
 };
 
 export const RANK_DISPLAY: Record<Rank, string> = {
@@ -56,6 +59,7 @@ export const RANK_DISPLAY: Record<Rank, string> = {
   [Rank.FOUR]: '4',
   [Rank.THREE]: '3',
   [Rank.TWO]: '2',
+  [Rank.JOKER]: 'J',
 };
 
 export const FACE_SYMBOLS: Record<Rank, string> = {
@@ -72,6 +76,7 @@ export const FACE_SYMBOLS: Record<Rank, string> = {
   [Rank.EIGHT]: '',
   [Rank.NINE]: '',
   [Rank.TEN]: '',
+  [Rank.JOKER]: '🃏',
 };
 
 // Performance optimization: Memoized card values
@@ -89,6 +94,7 @@ const CARD_VALUES = new Map<Rank, number>([
   [Rank.FOUR, 4],
   [Rank.THREE, 3],
   [Rank.TWO, 2],
+  [Rank.JOKER, 15],
 ]);
 
 // Position validation schema
@@ -237,10 +243,11 @@ export function getCardValue(card: CardType): number {
 }
 
 export function isFaceCard(card: CardType): boolean {
-  return [Rank.JACK, Rank.QUEEN, Rank.KING].includes(card.rank);
+  return [Rank.JACK, Rank.QUEEN, Rank.KING, Rank.JOKER].includes(card.rank);
 }
 
 export function getCardColor(card: CardType): 'red' | 'black' {
+  if (card.rank === Rank.JOKER) return 'red';
   return [Suit.HEARTS, Suit.DIAMONDS].includes(card.suit) ? 'red' : 'black';
 }
 

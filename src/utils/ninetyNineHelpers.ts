@@ -2,26 +2,12 @@ import { CardType, Rank, Suit } from '../types/card';
 import { GameOptions } from '../components/PreGameScreen';
 import { v4 as uuidv4 } from 'uuid';
 import { createNinetyNineDeck, dealCards } from './gameUtils';
-
-interface NinetyNinePlayer {
-  id: string;
-  name: string;
-  handIds: string[];
-  bidCardIds: string[];
-  revealBid: boolean;
-  tricksWon: number;
-  score: number;
-  isActive: boolean;
-  hasDeclaration: boolean;
-  isAI?: boolean;
-  rating?: number;
-  aiLevel?: string;
-}
+import { NinetyNinePlayer, NinetyNineGameState } from '../types/game';
 
 /**
  * Initializes a new Ninety-Nine game with the given options
  */
-export function initializeNinetyNineGame(options: GameOptions) {
+export function initializeNinetyNineGame(options: GameOptions): NinetyNineGameState {
   // Create player objects based on player count and names
   const players: NinetyNinePlayer[] = Array.from({ length: options.playerCount }).map((_, i) => {
     // For vs-computer mode, mark all players except the first as AI
@@ -213,7 +199,8 @@ export function getRankValue(rank: Rank): number {
     [Rank.JACK]: 11,
     [Rank.QUEEN]: 12,
     [Rank.KING]: 13,
-    [Rank.ACE]: 14
+    [Rank.ACE]: 14,
+    [Rank.JOKER]: 15
   };
 
   return rankValues[rank] || 0;

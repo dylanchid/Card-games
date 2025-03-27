@@ -57,8 +57,8 @@ export function createNinetyNineDeck(): CardType[] {
   // Add the joker
   cards.push({
     id: uuidv4(),
-    suit: 'JOKER' as Suit,
-    rank: 'JOKER' as Rank,
+    suit: Suit.JOKER,
+    rank: Rank.JOKER,
     isFaceUp: false,
     position: {
       x: 0,
@@ -170,7 +170,7 @@ export function determineTrickWinner(
 }
 
 export function getCardValue(card: CardType): number {
-  if (card.rank === 'JOKER' as Rank) return 15; // Joker is highest
+  if (card.rank === Rank.JOKER) return 15; // Joker is highest
   
   const values: Record<Rank, number> = {
     [Rank.ACE]: 14,
@@ -186,6 +186,7 @@ export function getCardValue(card: CardType): number {
     [Rank.FOUR]: 4,
     [Rank.THREE]: 3,
     [Rank.TWO]: 2,
+    [Rank.JOKER]: 15, // Add JOKER to the values record
   };
   return values[card.rank] || 0;
 }
@@ -202,7 +203,7 @@ export function calculateBidValue(bidCards: CardType[]): number {
     [Suit.HEARTS]: 2,
     [Suit.SPADES]: 1,
     [Suit.DIAMONDS]: 0,
-    ['JOKER' as Suit]: 0
+    [Suit.JOKER]: 0 // Add JOKER to the suitValues record
   };
   
   return bidCards.reduce((total, card) => {

@@ -4,8 +4,8 @@
   --card-border-radius: 0.25rem;
   --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   --card-border-color: #e2e8f0;
-  --card-red-color: #dc2626;
-  --card-black-color: #111827;
+  --card-red-color: #e40000;
+  --card-black-color: #000000;
   --card-background: #2c5282;
   --card-back-primary: #1a365d;
   --card-back-secondary: #2c5282;
@@ -14,6 +14,8 @@
   --card-focus-color: #4299e1;
   --card-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --card-disabled-opacity: 0.7;
+  --card-joker-color: #e40000;
+  --card-joker-secondary-color: #000000;
 }
 
 .playingCard {
@@ -136,6 +138,14 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+.cardFront.red {
+  color: var(--card-red-color);
+}
+
+.cardFront.black {
+  color: var(--card-black-color);
 }
 
 .topLeft, .bottomRight {
@@ -411,4 +421,58 @@
 
 .faceSuitSymbol {
   font-size: 2rem;
+}
+
+/* Joker card styling */
+.jokerContent {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 240, 240, 0.8) 100%);
+  position: relative;
+}
+
+.jokerCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.jokerSymbol {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  color: var(--card-joker-color);
+}
+
+.jokerText {
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--card-joker-secondary-color);
+}
+
+@media (max-width: 768px) {
+  .jokerSymbol {
+    font-size: 2.5rem;
+  }
+  
+  .jokerText {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .jokerSymbol {
+    font-size: 2rem;
+  }
+  
+  .jokerText {
+    font-size: 0.75rem;
+  }
 } 

@@ -619,10 +619,11 @@ function getRankValue(rank: Rank): number {
     [Rank.JACK]: 11,
     [Rank.QUEEN]: 12,
     [Rank.KING]: 13,
-    [Rank.ACE]: 14
+    [Rank.ACE]: 14,
+    [Rank.JOKER]: 15 // Added JOKER with highest value
   };
   
-  return rankValues[rank] || 0;
+  return rankValues[rank];
 }
 
 // Helper function to determine pass offset based on direction

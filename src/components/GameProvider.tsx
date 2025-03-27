@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
-import { CardGame } from '../types/game';
+import { CardGame, NinetyNineGameState } from '../types/game';
+import { CardType } from '../types/card';
 import { useAppDispatch } from '../store/store';
 import { GameOptions } from './PreGameScreen';
 import { initializeNinetyNineGame } from '../utils/ninetyNineHelpers';
@@ -9,7 +10,7 @@ import { initializeNinetyNineGame } from '../utils/ninetyNineHelpers';
 // Game context interface
 interface GameContextType {
   currentGame: CardGame | null;
-  gameState: any;
+  gameState: NinetyNineGameState | null;
   isLoading: boolean;
   error: string | null;
   selectGame: (game: CardGame) => void;
@@ -34,7 +35,7 @@ interface GameProviderProps {
 // Game provider component
 export const GameProvider: React.FC<GameProviderProps> = ({ children, initialGame, gameOptions }) => {
   const [currentGame, setCurrentGame] = useState<CardGame | null>(initialGame || null);
-  const [gameState, setGameState] = useState<any>(null);
+  const [gameState, setGameState] = useState<NinetyNineGameState | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const dispatch = useAppDispatch();
@@ -163,53 +164,18 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, initialGam
       if (currentPlayer && currentPlayer.isAI) {
         // Add a small delay to make the AI moves feel more natural
         const aiMoveTimeout = setTimeout(() => {
-          // Get available actions for the AI player
-          const availableActions = gameState.actions.availableActions(gameState, currentPlayerId);
+          // Get AI strategy based on difficulty level
+          const aiLevel = currentPlayer.aiLevel || 'medium';
+          const aiStrategy = getAIStrategy(aiLevel);
           
-          if (availableActions.length > 0) {
-            // Choose an action based on game phase
-            if (gameState.gamePhase === 'bidding') {
-              // Select cards for bidding - AI chooses randomly 1-3 cards from hand
-              const handIds = currentPlayer.handIds;
-              const numBidCards = Math.min(3, Math.max(1, Math.floor(Math.random() * 3) + 1));
-              const bidCardIds = [];
-              
-              // Randomly select cards for bid
-              const availableCards = [...handIds];
-              for (let i = 0; i < numBidCards && availableCards.length > 0; i++) {
-                const randomIndex = Math.floor(Math.random() * availableCards.length);
-                bidCardIds.push(availableCards[randomIndex]);
-                availableCards.splice(randomIndex, 1);
-              }
-              
-              // Place the bid
-              performAction('PLACE_BID', currentPlayerId, { cardIds: bidCardIds, playerId: currentPlayerId });
-            } 
-            else if (gameState.gamePhase === 'playing') {
-              // AI plays a card - in a real implementation this would use more sophisticated logic
-              // For now, just play the first valid card
-              const handIds = currentPlayer.handIds;
-              let cardToPlay = null;
-              
-              // Try each card until a valid one is found
-              for (const cardId of handIds) {
-                if (gameState.rules.isValidPlay(gameState, cardId, currentPlayerId)) {
-                  cardToPlay = cardId;
-                  break;
-                }
-              }
-              
-              if (cardToPlay) {
-                performAction('PLAY_CARD', currentPlayerId, { cardId: cardToPlay, playerId: currentPlayerId });
-              }
-            }
-          }
+          // Let the AI strategy determine and execute the next move
+          aiStrategy.makeMove(currentGame, gameState, currentPlayerId, performAction);
         }, 1500); // 1.5 second delay for AI moves
         
         return () => clearTimeout(aiMoveTimeout);
       }
     }
-  }, [gameState, performAction]);
+  }, [gameState, performAction, currentGame]);
 
   // Get available actions for a player
   const getAvailableActions = useCallback((playerId: string) => {
@@ -278,4 +244,285 @@ export const useGame = (): GameContextType => {
   return context;
 };
 
-export default GameProvider; 
+// Export GameProvider as default
+export default GameProvider;
+
+// AI Strategy pattern implementation
+interface AIStrategy {
+  makeMove: (game: CardGame | null, state: NinetyNineGameState, playerId: string, performAction: (action: string, playerId: string, payload?: any) => void) => void;
+}
+
+// Easy AI Strategy - Makes random valid moves
+const easyAIStrategy: AIStrategy = {
+  makeMove: (game, state, playerId, performAction) => {
+    if (!game || !state) return;
+    
+    // Get available actions for the AI player
+    const availableActions = game.actions.availableActions(state, playerId);
+    
+    if (availableActions.length > 0) {
+      // Choose an action based on game phase
+      if (state.gamePhase === 'bidding') {
+        // Select cards for bidding - AI chooses randomly 1-3 cards from hand
+        const handIds = state.entities.players[playerId].handIds;
+        const numBidCards = Math.min(3, Math.max(1, Math.floor(Math.random() * 3) + 1));
+        const bidCardIds = [];
+        
+        // Randomly select cards for bid
+        const availableCards = [...handIds];
+        for (let i = 0; i < numBidCards && availableCards.length > 0; i++) {
+          const randomIndex = Math.floor(Math.random() * availableCards.length);
+          bidCardIds.push(availableCards[randomIndex]);
+          availableCards.splice(randomIndex, 1);
+        }
+        
+        // Place the bid
+        performAction('PLACE_BID', playerId, { cardIds: bidCardIds, playerId });
+      } 
+      else if (state.gamePhase === 'playing') {
+        // Play the first valid card found
+        const handIds = state.entities.players[playerId].handIds;
+        let cardToPlay = null;
+        
+        // Try each card until a valid one is found
+        for (const cardId of handIds) {
+          if (game.rules.isValidPlay(state, cardId, playerId)) {
+            cardToPlay = cardId;
+            break;
+          }
+        }
+        
+        if (cardToPlay) {
+          performAction('PLAY_CARD', playerId, { cardId: cardToPlay, playerId });
+        }
+      }
+    }
+  }
+};
+
+// Medium AI Strategy - Makes more intelligent choices based on game state
+const mediumAIStrategy: AIStrategy = {
+  makeMove: (game, state, playerId, performAction) => {
+    if (!game || !state) return;
+    
+    const availableActions = game.actions.availableActions(state, playerId);
+    
+    if (availableActions.length > 0) {
+      if (state.gamePhase === 'bidding') {
+        // Select cards that might form special combinations
+        const player = state.entities.players[playerId];
+        const handIds = player.handIds;
+        const hand = handIds.map(id => state.entities.cards[id]);
+        
+        // Try to find a marriage (King + Queen of same suit)
+        const marriages = findMarriages(hand);
+        if (marriages.length > 0) {
+          const marriageCards = marriages[0];
+          performAction('PLACE_BID', playerId, { cardIds: marriageCards.map(card => card.id), playerId });
+          return;
+        }
+        
+        // Or pick 1-3 reasonable cards
+        const bidCards = selectReasonableBidCards(hand, 2);
+        performAction('PLACE_BID', playerId, { cardIds: bidCards.map(card => card.id), playerId });
+      } 
+      else if (state.gamePhase === 'playing') {
+        // Play strategically based on current trick and game state
+        const player = state.entities.players[playerId];
+        const handIds = player.handIds;
+        const hand = handIds.map(id => state.entities.cards[id]);
+        
+        // Determine the best card to play
+        const bestCardId = findBestCardToPlay(game, state, hand, playerId);
+        
+        if (bestCardId) {
+          performAction('PLAY_CARD', playerId, { cardId: bestCardId, playerId });
+        } else {
+          // Fallback to playing any valid card
+          for (const cardId of handIds) {
+            if (game.rules.isValidPlay(state, cardId, playerId)) {
+              performAction('PLAY_CARD', playerId, { cardId, playerId });
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
+// Hard AI Strategy - Makes sophisticated moves analyzing all available information
+const hardAIStrategy: AIStrategy = {
+  makeMove: (game, state, playerId, performAction) => {
+    if (!game || !state) return;
+    
+    const availableActions = game.actions.availableActions(state, playerId);
+    
+    if (availableActions.length > 0) {
+      if (state.gamePhase === 'bidding') {
+        // Analyze hand and determine optimal bidding strategy
+        const player = state.entities.players[playerId];
+        const handIds = player.handIds;
+        const hand = handIds.map(id => state.entities.cards[id]);
+        
+        const optimalBid = determineOptimalBid(hand, state);
+        performAction('PLACE_BID', playerId, { cardIds: optimalBid, playerId });
+      } 
+      else if (state.gamePhase === 'playing') {
+        // Use advanced logic to determine the best card to play
+        const player = state.entities.players[playerId];
+        const handIds = player.handIds;
+        const hand = handIds.map(id => state.entities.cards[id]);
+        
+        // Advanced card selection algorithm
+        const bestCardId = calculateOptimalPlay(game, state, hand, playerId);
+        
+        if (bestCardId) {
+          performAction('PLAY_CARD', playerId, { cardId: bestCardId, playerId });
+        }
+      }
+    }
+  }
+};
+
+// Helper functions for AI strategies
+function getAIStrategy(level: string): AIStrategy {
+  switch (level) {
+    case 'easy':
+      return easyAIStrategy;
+    case 'hard':
+      return hardAIStrategy;
+    case 'medium':
+    default:
+      return mediumAIStrategy;
+  }
+}
+
+// Find King+Queen pairs of the same suit
+function findMarriages(hand: CardType[]): CardType[][] {
+  const marriages: CardType[][] = [];
+  
+  // Group cards by suit
+  const suits: {[key: string]: CardType[]} = {};
+  hand.forEach(card => {
+    if (!suits[card.suit]) suits[card.suit] = [];
+    suits[card.suit].push(card);
+  });
+  
+  // Check each suit for King and Queen
+  Object.values(suits).forEach(suitCards => {
+    const king = suitCards.find(card => card.rank === 'KING');
+    const queen = suitCards.find(card => card.rank === 'QUEEN');
+    
+    if (king && queen) {
+      marriages.push([king, queen]);
+    }
+  });
+  
+  return marriages;
+}
+
+// Select reasonable bid cards based on card values
+function selectReasonableBidCards(hand: CardType[], count: number): CardType[] {
+  // Sort cards by their value (face cards are more valuable)
+  const sortedHand = [...hand].sort((a, b) => {
+    const valueMap: {[key: string]: number} = {
+      'ACE': 14, 'KING': 13, 'QUEEN': 12, 'JACK': 11,
+      'TEN': 10, 'NINE': 9, 'EIGHT': 8, 'SEVEN': 7,
+      'SIX': 6, 'FIVE': 5, 'FOUR': 4, 'THREE': 3, 'TWO': 2
+    };
+    return (valueMap[b.rank] || 0) - (valueMap[a.rank] || 0);
+  });
+  
+  // Take the top N cards
+  return sortedHand.slice(0, Math.min(count, sortedHand.length));
+}
+
+// Find the best card to play based on current game state
+function findBestCardToPlay(game: CardGame | null, state: NinetyNineGameState, hand: CardType[], playerId: string): string | null {
+  if (!game) return null;
+  
+  const validCards = hand.filter(card => 
+    game.rules.isValidPlay(state, card.id, playerId)
+  );
+  
+  if (validCards.length === 0) return null;
+  
+  // If leading, play highest card
+  if (state.currentTrickLeader === state.playerIds.indexOf(playerId)) {
+    // Sort by rank (highest first)
+    const sortedCards = [...validCards].sort((a, b) => {
+      const valueMap: {[key: string]: number} = {
+        'ACE': 14, 'KING': 13, 'QUEEN': 12, 'JACK': 11,
+        'TEN': 10, 'NINE': 9, 'EIGHT': 8, 'SEVEN': 7, 
+        'SIX': 6, 'FIVE': 5, 'FOUR': 4, 'THREE': 3, 'TWO': 2
+      };
+      return (valueMap[b.rank] || 0) - (valueMap[a.rank] || 0);
+    });
+    
+    return sortedCards[0].id;
+  } 
+  
+  // If not leading, play lowest card that follows suit
+  const leadSuit = state.currentTrickSuit;
+  const followingSuitCards = validCards.filter(card => card.suit === leadSuit);
+  
+  if (followingSuitCards.length > 0) {
+    // Sort by rank (lowest first)
+    const sortedCards = [...followingSuitCards].sort((a, b) => {
+      const valueMap: {[key: string]: number} = {
+        'TWO': 2, 'THREE': 3, 'FOUR': 4, 'FIVE': 5, 'SIX': 6,
+        'SEVEN': 7, 'EIGHT': 8, 'NINE': 9, 'TEN': 10,
+        'JACK': 11, 'QUEEN': 12, 'KING': 13, 'ACE': 14
+      };
+      return (valueMap[a.rank] || 0) - (valueMap[b.rank] || 0);
+    });
+    
+    return sortedCards[0].id;
+  }
+  
+  // If can't follow suit, play lowest card
+  const sortedCards = [...validCards].sort((a, b) => {
+    const valueMap: {[key: string]: number} = {
+      'TWO': 2, 'THREE': 3, 'FOUR': 4, 'FIVE': 5, 'SIX': 6,
+      'SEVEN': 7, 'EIGHT': 8, 'NINE': 9, 'TEN': 10,
+      'JACK': 11, 'QUEEN': 12, 'KING': 13, 'ACE': 14
+    };
+    return (valueMap[a.rank] || 0) - (valueMap[b.rank] || 0);
+  });
+  
+  return sortedCards[0].id;
+}
+
+// Placeholder for advanced bidding strategy
+function determineOptimalBid(hand: CardType[], state: NinetyNineGameState): string[] {
+  // This would be a complex algorithm analyzing the entire hand
+  // For now, we'll use a simplified approach
+  const marriages = findMarriages(hand);
+  if (marriages.length > 0) {
+    return marriages[0].map(card => card.id);
+  }
+  
+  // Look for three of a kind
+  const rankGroups: {[key: string]: CardType[]} = {};
+  hand.forEach(card => {
+    if (!rankGroups[card.rank]) rankGroups[card.rank] = [];
+    rankGroups[card.rank].push(card);
+  });
+  
+  for (const rankCards of Object.values(rankGroups)) {
+    if (rankCards.length >= 3) {
+      return rankCards.slice(0, 3).map(card => card.id);
+    }
+  }
+  
+  // Default to 2 highest value cards
+  return selectReasonableBidCards(hand, 2).map(card => card.id);
+}
+
+// Placeholder for advanced card play strategy
+function calculateOptimalPlay(game: CardGame | null, state: NinetyNineGameState, hand: CardType[], playerId: string): string | null {
+  // This would be a complex algorithm analyzing the entire game state
+  // For now, we'll use the simpler strategy
+  return findBestCardToPlay(game, state, hand, playerId);
+} 

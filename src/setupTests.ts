@@ -28,6 +28,17 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
 };
 
+// Mock CSS modules
+jest.mock('*.module.css', () => {
+  const handler = {
+    get: function(target: any, prop: string) {
+      // Return the property name as the CSS class for testing
+      return prop;
+    }
+  };
+  return new Proxy({}, handler);
+});
+
 // Suppress console.error in tests
 const originalError = console.error;
 beforeAll(() => {

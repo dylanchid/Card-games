@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useGame } from './GameProvider';
 import { CardType, StackType } from '../types/card';
 import { Card } from './Card/Card';
+import { PlayerHand } from './PlayerHand';
 import './GameBoard.css';
 
 interface GameBoardProps {
@@ -229,45 +230,83 @@ export const GameBoard: React.FC<GameBoardProps> = ({ className }) => {
       onMouseUp={() => dragCard && handleCardDrop('table')}
     >
       {/* Render stacks */}
-      {stacks.map(stack => (
-        <div 
-          key={stack.id}
-          className={`card-stack ${stack.type}`}
-          style={{
-            position: 'absolute',
-            left: stack.position.x,
-            top: stack.position.y,
-            zIndex: stack.position.zIndex
-          }}
-          onMouseUp={() => dragCard && handleCardDrop(stack.id)}
-        >
-          {/* Render cards in stack based on arrangement */}
-          {stack.cards.map((card, index) => {
-            const offset = currentGame?.ui.cardArrangement === 'fan' 
-              ? index * 20 
-              : currentGame?.ui.cardArrangement === 'stack' 
-                ? index * 2 
-                : index * 30;
-                
-            return (
-              <Card
-                key={card.id}
-                card={card}
-                style={{
-                  position: 'absolute',
-                  left: offset,
-                  top: currentGame?.ui.cardArrangement === 'row' ? 0 : offset / 3,
-                  zIndex: 100 + index
-                }}
-                onDragStart={(e) => handleCardDragStartFromEvent(e, card, stack.id)}
-                onDragEnd={() => handleCardDrop(stack.id)}
-                onClick={() => handleCardClick(card, stack.id)}
-                disabled={!(stack.type === 'hand')}
+      {stacks.map(stack => {
+        // Use PlayerHand component for hand stacks
+        if (stack.type === 'hand') {
+          const playerId = stack.owner || 'player1';
+          const isCurrentPlayer = playerId === 'player1'; // Adjust based on your current player logic
+          
+          // Position the player hand at the bottom of the game board if it's the current player
+          const position = isCurrentPlayer 
+            ? { left: '50%', bottom: '20px', transform: 'translateX(-50%)' }
+            : { 
+                left: stack.position.x, 
+                top: stack.position.y, 
+                transform: 'none'
+              };
+              
+          return (
+            <div 
+              key={stack.id}
+              className={`player-hand-container ${isCurrentPlayer ? 'current-player' : ''}`}
+              style={{
+                position: 'absolute',
+                ...position,
+                zIndex: stack.position.zIndex,
+                width: isCurrentPlayer ? '80%' : '250px'
+              }}
+            >
+              <PlayerHand
+                cards={stack.cards}
+                onCardClick={(card) => handleCardClick(card, stack.id)}
+                selectedCards={[]} // Add selected cards state if needed
+                disabled={false}
               />
-            );
-          })}
-        </div>
-      ))}
+            </div>
+          );
+        }
+        
+        // For non-hand stacks (deck, table, etc.)
+        return (
+          <div 
+            key={stack.id}
+            className={`card-stack ${stack.type}`}
+            style={{
+              position: 'absolute',
+              left: stack.position.x,
+              top: stack.position.y,
+              zIndex: stack.position.zIndex
+            }}
+            onMouseUp={() => dragCard && handleCardDrop(stack.id)}
+          >
+            {/* Render cards in stack based on arrangement */}
+            {stack.cards.map((card, index) => {
+              const offset = currentGame?.ui.cardArrangement === 'fan' 
+                ? index * 20 
+                : currentGame?.ui.cardArrangement === 'stack' 
+                  ? index * 2 
+                  : index * 30;
+                  
+              return (
+                <Card
+                  key={card.id}
+                  card={card}
+                  style={{
+                    position: 'absolute',
+                    left: offset,
+                    top: currentGame?.ui.cardArrangement === 'row' ? 0 : offset / 3,
+                    zIndex: 100 + index
+                  }}
+                  onDragStart={(e) => handleCardDragStartFromEvent(e, card, stack.id)}
+                  onDragEnd={() => handleCardDrop(stack.id)}
+                  onClick={() => handleCardClick(card, stack.id)}
+                  disabled={false}
+                />
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 };

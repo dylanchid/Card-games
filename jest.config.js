@@ -47,6 +47,13 @@ const config = {
     '^.+\\.(ts|tsx|js|jsx)$': ['babel-jest', { configFile: './jest.babel.config.js' }],
   },
 
+  // Mock CSS modules
+  moduleNameMapper: {
+    '\\.module\\.css$': '<rootDir>/src/__mocks__/styleMock.js',
+    '\\.css$': '<rootDir>/src/__mocks__/styleMock.js',
+    '@/(.*)': '<rootDir>/src/$1',
+  },
+
   // The root directory that Jest should scan for tests and modules within
   rootDir: ".",
 

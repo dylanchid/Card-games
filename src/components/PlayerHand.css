@@ -3,28 +3,42 @@
   justify-content: center;
   align-items: center;
   padding: 1rem;
-  min-height: 160px;
+  min-height: 200px;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 8px;
   position: relative;
-  overflow: hidden;
   transition: all 0.3s ease;
+  width: 100%;
+  overflow-x: visible;
+  overflow-y: visible;
 }
 
-.card-wrapper {
+/* Fan out cards on hover */
+.player-hand:hover .card-container {
+  margin-right: 50px;
+}
+
+.card-container {
   position: relative;
-  transition: transform 0.3s ease;
-  margin-right: -1rem;
+  transition: all 0.3s ease;
+  margin-right: -65px; /* Default overlap */
+  cursor: pointer;
 }
 
-.card-wrapper:last-child {
+.card-container:last-child {
   margin-right: 0;
 }
 
-/* Card selection animation */
-.card-wrapper.selected {
-  transform: translateY(-10px);
-  z-index: 20;
+/* Increase spacing when player hovers over a specific card */
+.card-container:hover {
+  transform: translateY(-20px);
+  z-index: 100 !important;
+}
+
+/* Card selection state */
+.card-container.selected {
+  transform: translateY(-20px);
+  z-index: 50;
 }
 
 /* Disabled state */
@@ -37,22 +51,30 @@
 @media (max-width: 768px) {
   .player-hand {
     padding: 0.5rem;
-    min-height: 120px;
+    min-height: 150px;
   }
 
-  .card-wrapper {
-    margin-right: -0.5rem;
+  .card-container {
+    margin-right: -70px;
+  }
+
+  .player-hand:hover .card-container {
+    margin-right: 25px;
   }
 }
 
 @media (max-width: 480px) {
   .player-hand {
     padding: 0.25rem;
-    min-height: 100px;
+    min-height: 130px;
   }
 
-  .card-wrapper {
-    margin-right: -0.25rem;
+  .card-container {
+    margin-right: -75px;
+  }
+
+  .player-hand:hover .card-container {
+    margin-right: 15px;
   }
 }
 
@@ -66,7 +88,7 @@
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .player-hand,
-  .card-wrapper {
+  .card-container {
     transition: none;
   }
 } 

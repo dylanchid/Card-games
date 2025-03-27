@@ -4,29 +4,29 @@ import React, { ReactNode, createContext, useContext, useState, useMemo } from '
 import { ThemeProvider } from 'next-themes';
 import { Provider } from 'react-redux';
 import { store } from '../src/store/store';
-import GameProvider from '../src/components/GameProvider';
+import { GameProvider } from '../src/components/GameProvider';
 
-// Game-specific context providers
-interface GameContextType {
+// Game interaction context for drag and drop operations
+interface GameInteractionContextType {
   isDragging: boolean;
   setIsDragging: (isDragging: boolean) => void;
   currentPlayer: string;
   setCurrentPlayer: (player: string) => void;
 }
 
-const defaultGameContext: GameContextType = {
+const defaultGameInteractionContext: GameInteractionContextType = {
   isDragging: false,
   setIsDragging: () => {},
   currentPlayer: '',
   setCurrentPlayer: () => {},
 };
 
-export const GameContext = createContext<GameContextType>(defaultGameContext);
+export const GameInteractionContext = createContext<GameInteractionContextType>(defaultGameInteractionContext);
 
-export function useGameContext() {
-  const context = useContext(GameContext);
+export function useGameInteractionContext() {
+  const context = useContext(GameInteractionContext);
   if (!context) {
-    throw new Error('useGameContext must be used within a GameProvider');
+    throw new Error('useGameInteractionContext must be used within a GameInteractionProvider');
   }
   return context;
 }
@@ -46,9 +46,9 @@ export function GameInteractionProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <GameContext.Provider value={value}>
+    <GameInteractionContext.Provider value={value}>
       {children}
-    </GameContext.Provider>
+    </GameInteractionContext.Provider>
   );
 }
 
@@ -61,9 +61,11 @@ export function Providers({ children }: { children: ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
-        <GameInteractionProvider>
-          {children}
-        </GameInteractionProvider>
+        <GameProvider>
+          <GameInteractionProvider>
+            {children}
+          </GameInteractionProvider>
+        </GameProvider>
       </ThemeProvider>
     </Provider>
   );

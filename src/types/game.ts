@@ -1,6 +1,65 @@
 import { CardType, Suit } from './card';
 
 /**
+ * Interface for Ninety-Nine player
+ */
+export interface NinetyNinePlayer {
+  id: string;
+  name: string;
+  handIds: string[];
+  bidCardIds: string[];
+  revealBid: boolean;
+  tricksWon: number;
+  score: number;
+  isActive: boolean;
+  hasDeclaration: boolean;
+  isAI?: boolean;
+  rating?: number;
+  aiLevel?: string;
+}
+
+/**
+ * Interface for Ninety-Nine game state
+ */
+export interface NinetyNineGameState {
+  entities: {
+    players: Record<string, NinetyNinePlayer>;
+    cards: Record<string, CardType>;
+  };
+  playerIds: string[];
+  deckIds: string[];
+  turnupCardId: string | null;
+  gamePhase: 'bidding' | 'playing' | 'scoring';
+  currentPlayerIndex: number;
+  currentTrickCardIds: (string | null)[];
+  currentTrickSuit: Suit | null;
+  currentTrickWinner: string | null;
+  currentTrickLeader: number;
+  tricksPlayed: number;
+  isLoading: boolean;
+  error: string | null;
+  lastAction: string | null;
+  gameStarted: boolean;
+  roundNumber: number;
+  gameMode: 'local' | 'vs-computer' | 'ranked';
+  isRanked?: boolean;
+  hasAI?: boolean;
+  lastTricks: any[];
+  trumpSuit: Suit | null;
+  gameSettings: {
+    maxRounds: number;
+    maxTricks: number;
+    cardsPerPlayer: number;
+    allowTrump: boolean;
+    allowNoTrump: boolean;
+    allowPartnership: boolean;
+    scoringSystem: string;
+    timeLimit: number;
+    autoPlay: boolean;
+  };
+}
+
+/**
  * Base interface for all card games
  */
 export interface CardGame {

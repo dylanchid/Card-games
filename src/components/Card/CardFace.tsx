@@ -2,12 +2,24 @@ import React, { memo } from 'react';
 import { CardType, getCardColor, isFaceCard, Suit, Rank, CardFaceProps, SUIT_SYMBOLS, RANK_DISPLAY, FACE_SYMBOLS } from '../../types/card';
 import styles from './Card.module.css';
 
+const debugCardFace = process.env.NODE_ENV === 'development';
+
 const SuitSymbol: React.FC<{ suit: Suit; className?: string }> = ({ suit, className }) => {
   return <span className={`${styles.suitSymbol} ${className || ''}`}>{SUIT_SYMBOLS[suit]}</span>;
 };
 
 const RankDisplay: React.FC<{ rank: Rank; className?: string }> = ({ rank, className }) => {
   return <span className={`${styles.rankDisplay} ${className || ''}`}>{RANK_DISPLAY[rank]}</span>;
+};
+
+// Add special component for rendering joker cards
+const JokerCardContent: React.FC = () => {
+  return (
+    <div className={styles.jokerCard}>
+      <span className={styles.jokerSymbol}>{FACE_SYMBOLS[Rank.JOKER]}</span>
+      <span className={styles.jokerText}>JOKER</span>
+    </div>
+  );
 };
 
 const getCardPattern = (rank: Rank): number[][] => {
@@ -26,6 +38,7 @@ const getCardPattern = (rank: Rank): number[][] => {
     [Rank.JACK]: [[0]],  // Face cards don't use patterns
     [Rank.QUEEN]: [[0]], // Face cards don't use patterns
     [Rank.KING]: [[0]],  // Face cards don't use patterns
+    [Rank.JOKER]: [[0]], // Joker doesn't use patterns
   };
   return patterns[rank] || [[0]];
 };
@@ -64,38 +77,65 @@ const FaceCardContent: React.FC<{ rank: Rank; suit: Suit }> = ({ rank, suit }) =
 };
 
 export const CardFace: React.FC<CardFaceProps> = memo(({ isLoading, card }) => {
+  // Enhanced debugging
+  if (debugCardFace) {
+    console.debug('[CardFace] Rendering card face:', { 
+      id: card?.id, 
+      rank: card?.rank, 
+      suit: card?.suit,
+      isJoker: card?.rank === Rank.JOKER
+    });
+  }
+
   if (isLoading) {
     return <div className={styles.cardLoading} data-testid="card-loading" />;
   }
 
-  const cardColor = getCardColor(card);
+  // Add special handling for Joker cards
+  const isJoker = card.rank === Rank.JOKER;
+  const cardColor = isJoker ? 'red' : getCardColor(card);
+  const colorClass = isJoker 
+    ? styles.red 
+    : (card.suit === Suit.HEARTS || card.suit === Suit.DIAMONDS) 
+      ? styles.red 
+      : styles.black;
+  
   const isFace = isFaceCard(card);
 
   return (
     <div 
-      className={`${styles.cardFront} ${styles[cardColor.toLowerCase()]}`} 
+      className={`${styles.cardFront} ${colorClass}`} 
       data-testid="card-face"
     >
-      {/* Top left corner */}
-      <div className={styles.topLeft}>
-        <RankDisplay rank={card.rank} />
-        <SuitSymbol suit={card.suit} />
-      </div>
+      {/* For Joker cards */}
+      {isJoker ? (
+        <div className={styles.jokerContent}>
+          <JokerCardContent />
+        </div>
+      ) : (
+        <>
+          {/* Top left corner */}
+          <div className={styles.topLeft}>
+            <RankDisplay rank={card.rank} />
+            <SuitSymbol suit={card.suit} />
+          </div>
 
-      {/* Center content */}
-      <div className={styles.centerContent}>
-        {isFace ? (
-          <FaceCardContent rank={card.rank} suit={card.suit} />
-        ) : (
-          <NumberCardPattern rank={card.rank} suit={card.suit} />
-        )}
-      </div>
+          {/* Center content */}
+          <div className={styles.centerContent}>
+            {isFace ? (
+              <FaceCardContent rank={card.rank} suit={card.suit} />
+            ) : (
+              <NumberCardPattern rank={card.rank} suit={card.suit} />
+            )}
+          </div>
 
-      {/* Bottom right corner (inverted) */}
-      <div className={styles.bottomRight}>
-        <RankDisplay rank={card.rank} />
-        <SuitSymbol suit={card.suit} />
-      </div>
+          {/* Bottom right corner (inverted) */}
+          <div className={styles.bottomRight}>
+            <RankDisplay rank={card.rank} />
+            <SuitSymbol suit={card.suit} />
+          </div>
+        </>
+      )}
     </div>
   );
 });

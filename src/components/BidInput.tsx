@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CardType } from '@/types/card';
+import { CardType } from '../store/types/card';
 import { useDispatch } from 'react-redux';
 import { placeBid } from '@/store/slices/gameSlice';
 

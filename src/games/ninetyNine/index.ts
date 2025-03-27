@@ -11,6 +11,7 @@ import {
   calculateBidValue,
   determineTrumpSuit
 } from '../../utils/gameUtils';
+import { initializeNinetyNineGame } from '../../utils/ninetyNineHelpers';
 import { v4 as uuidv4 } from 'uuid';
 import { Player } from '../../store/slices/gameSlice';
 
@@ -136,59 +137,16 @@ export const NinetyNineGame = (): CardGame => {
     
     setup: {
       createInitialState: (playerIds, settings) => {
-        // Create a new game state with the given players
-        const initialState: any = {
-          entities: {
-            players: {},
-            cards: {}
-          },
-          playerIds,
-          deckIds: [],
-          turnupCardId: null,
-          gamePhase: 'dealing',
-          currentPlayerIndex: 0,
-          currentTrickCardIds: Array(playerIds.length).fill(null),
-          currentTrickSuit: null,
-          currentTrickWinner: null,
-          currentTrickLeader: 0,
-          tricksPlayed: 0,
-          isLoading: false,
-          error: null,
-          lastAction: null,
-          gameStarted: false,
-          roundNumber: 1,
-          gameMode: 'standard',
-          lastTricks: [],
-          trumpSuit: null,
-          gameSettings: {
-            maxRounds: settings?.maxRounds || 9, // 9 rounds is typical for Ninety-Nine
-            maxTricks: settings?.maxTricks || 12, // Max number of tricks based on cards per player
-            cardsPerPlayer: settings?.cardsPerPlayer || 12,
-            allowTrump: settings?.allowTrump !== undefined ? settings.allowTrump : true,
-            allowNoTrump: settings?.allowNoTrump !== undefined ? settings.allowNoTrump : true,
-            allowPartnership: settings?.allowPartnership !== undefined ? settings.allowPartnership : false,
-            scoringSystem: settings?.scoringSystem || 'standard',
-            timeLimit: settings?.timeLimit || 30,
-            autoPlay: settings?.autoPlay !== undefined ? settings.autoPlay : false,
-          }
-        };
-        
-        // Initialize players
-        initialState.playerIds.forEach((id: string, index: number) => {
-          initialState.entities.players[id] = {
-            id,
-            name: `Player ${index + 1}`,
-            handIds: [],
-            bidCardIds: [],
-            revealBid: false,
-            tricksWon: 0,
-            score: 0,
-            isActive: index === 0,
-            hasDeclaration: false
-          };
+        // Delegate to the helper function instead of duplicating logic
+        return initializeNinetyNineGame({
+          playerCount: playerIds.length,
+          playerNames: playerIds.map((id, i) => `Player ${i+1}`),
+          maxRounds: settings?.maxRounds || 9,
+          cardsPerPlayer: settings?.cardsPerPlayer || 12,
+          allowTrump: settings?.allowTrump !== undefined ? settings.allowTrump : true,
+          timeLimit: settings?.timeLimit || 30,
+          gameMode: settings?.gameMode || 'local'
         });
-        
-        return initialState;
       },
       
       // Fix the return type to match the interface expectation
